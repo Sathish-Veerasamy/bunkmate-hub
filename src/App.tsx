@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import Index from "./pages/Index";
 import Dealers from "./pages/Dealers";
+import DealerDetails from "./pages/DealerDetails";
 import Events from "./pages/Events";
 import Subscriptions from "./pages/Subscriptions";
 import Settings from "./pages/Settings";
@@ -23,6 +24,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/dealers" element={<Dealers />} />
+            <Route path="/dealers/:id" element={<DealerDetails />} />
             <Route path="/events" element={<Events />} />
             <Route path="/subscriptions" element={<Subscriptions />} />
             <Route path="/settings" element={<Settings />} />

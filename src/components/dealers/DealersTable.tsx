@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -91,6 +92,7 @@ interface DealersTableProps {
 }
 
 export default function DealersTable({ searchQuery, onEdit }: DealersTableProps) {
+  const navigate = useNavigate();
   const [sortColumn, setSortColumn] = useState<string>("dealerName");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [columns, setColumns] = useState<Column[]>([
@@ -211,7 +213,12 @@ export default function DealersTable({ searchQuery, onEdit }: DealersTableProps)
                 <TableRow key={dealer.id}>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => navigate(`/dealers/${dealer.id}`)}
+                      >
                         <Eye className="h-4 w-4" />
                       </Button>
                       <Button

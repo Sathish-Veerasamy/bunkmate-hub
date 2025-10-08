@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
+import { Upload, X } from "lucide-react";
+import { useState } from "react";
 
 interface DealerFormProps {
   dealer?: any;
@@ -23,9 +25,22 @@ export default function DealerForm({ dealer, onClose }: DealerFormProps) {
   const { register, handleSubmit, setValue, watch } = useForm({
     defaultValues: dealer || {},
   });
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      setUploadedFiles((prev) => [...prev, ...newFiles]);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const onSubmit = (data: any) => {
     console.log("Form data:", data);
+    console.log("Uploaded files:", uploadedFiles);
     toast({
       title: dealer ? "Dealer Updated" : "Dealer Added",
       description: dealer
@@ -297,6 +312,56 @@ export default function DealerForm({ dealer, onClose }: DealerFormProps) {
             placeholder="Describe any other business activities"
             rows={3}
           />
+        </div>
+
+        {/* Document Attachments */}
+        <div className="space-y-2 md:col-span-2">
+          <Label htmlFor="documents">Document Attachments</Label>
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Input
+                id="documents"
+                type="file"
+                multiple
+                onChange={handleFileChange}
+                className="cursor-pointer"
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+              />
+              <Button type="button" variant="outline" size="icon" asChild>
+                <label htmlFor="documents" className="cursor-pointer">
+                  <Upload className="h-4 w-4" />
+                </label>
+              </Button>
+            </div>
+            {uploadedFiles.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  {uploadedFiles.length} file(s) selected
+                </p>
+                <div className="space-y-2">
+                  {uploadedFiles.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-2 bg-muted rounded-md"
+                    >
+                      <span className="text-sm truncate flex-1">
+                        {file.name}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => removeFile(index)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
