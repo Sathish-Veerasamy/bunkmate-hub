@@ -1,14 +1,16 @@
-import { Home, Users, Calendar, CreditCard, Settings, Menu } from "lucide-react";
+import { Home, Users, Calendar, CreditCard, Settings, Menu, UserCog } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import Header from "./Header";
 
 const navigation = [
   { name: "Home", href: "/", icon: Home },
   { name: "Bunk Dealers", href: "/dealers", icon: Users },
   { name: "Events", href: "/events", icon: Calendar },
   { name: "Subscriptions", href: "/subscriptions", icon: CreditCard },
+  { name: "Users", href: "/users", icon: UserCog },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 
@@ -93,6 +95,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </Button>
           <h1 className="text-lg font-semibold">Bunk Dealers Management</h1>
         </header>
+
+        {/* Desktop header */}
+        <div className="hidden lg:block">
+          <Header />
+        </div>
 
         {/* Page content */}
         <main className="p-4 lg:p-8">{children}</main>

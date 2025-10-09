@@ -9,6 +9,7 @@ import Dealers from "./pages/Dealers";
 import DealerDetails from "./pages/DealerDetails";
 import Events from "./pages/Events";
 import Subscriptions from "./pages/Subscriptions";
+import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/dealers/:id" element={<DealerDetails />} />
             <Route path="/events" element={<Events />} />
             <Route path="/subscriptions" element={<Subscriptions />} />
+            <Route path="/users" element={<Users />} />
             <Route path="/settings" element={<Settings />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
