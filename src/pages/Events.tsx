@@ -2,41 +2,10 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Calendar, MapPin, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-
-const sampleEvents = [
-  {
-    id: 1,
-    title: "Annual General Meeting 2025",
-    date: "2025-11-15",
-    time: "10:00 AM",
-    venue: "DDPWA Office, Main Road, Dindigul",
-    description: "Annual general meeting for all active dealers",
-    attendees: 45,
-    status: "upcoming",
-  },
-  {
-    id: 2,
-    title: "Safety Training Workshop",
-    date: "2025-10-20",
-    time: "2:00 PM",
-    venue: "Community Hall, Market Street",
-    description: "Mandatory safety training for all petroleum dealers",
-    attendees: 32,
-    status: "upcoming",
-  },
-  {
-    id: 3,
-    title: "District Coordination Meet",
-    date: "2025-09-10",
-    time: "11:00 AM",
-    venue: "District Collector Office",
-    description: "Coordination meeting with district administration",
-    attendees: 28,
-    status: "completed",
-  },
-];
+import { useEvents } from "@/store/events";
 
 export default function Events() {
+  const { events } = useEvents();
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -55,7 +24,7 @@ export default function Events() {
 
       {/* Events Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {sampleEvents.map((event) => (
+        {events.map((event) => (
           <Card key={event.id} className="p-6 hover:shadow-lg transition-shadow">
             <div className="space-y-4">
               {/* Status Badge */}

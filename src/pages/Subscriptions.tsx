@@ -2,47 +2,11 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CreditCard, CheckCircle2, XCircle } from "lucide-react";
-
-const sampleSubscriptions = [
-  {
-    id: 1,
-    dealerName: "Rajesh Kumar",
-    dealershipName: "Kumar Petroleum Services",
-    membershipNo: "DDPWA001",
-    renewalDate: "2026-03-31",
-    status: "active",
-    amount: 5000,
-  },
-  {
-    id: 2,
-    dealerName: "Priya Sharma",
-    dealershipName: "Sharma Fuel Station",
-    membershipNo: "DDPWA002",
-    renewalDate: "2025-12-31",
-    status: "active",
-    amount: 5000,
-  },
-  {
-    id: 3,
-    dealerName: "Mohammed Ali",
-    dealershipName: "Ali Petro Center",
-    membershipNo: "DDPWA003",
-    renewalDate: "2025-06-30",
-    status: "expiring",
-    amount: 5000,
-  },
-  {
-    id: 4,
-    dealerName: "Lakshmi Devi",
-    dealershipName: "Devi Fuel Solutions",
-    membershipNo: "DDPWA004",
-    renewalDate: "2025-03-15",
-    status: "expired",
-    amount: 5000,
-  },
-];
+import { useSubscriptions } from "@/store/subscriptions";
 
 export default function Subscriptions() {
+  const { subscriptions, getStats } = useSubscriptions();
+  const stats = getStats();
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -62,7 +26,7 @@ export default function Subscriptions() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Active</p>
-              <p className="text-2xl font-bold">34</p>
+              <p className="text-2xl font-bold">{stats.active}</p>
             </div>
           </div>
         </Card>
@@ -73,7 +37,7 @@ export default function Subscriptions() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Expiring Soon</p>
-              <p className="text-2xl font-bold">8</p>
+              <p className="text-2xl font-bold">{stats.expiring}</p>
             </div>
           </div>
         </Card>
@@ -84,7 +48,7 @@ export default function Subscriptions() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Expired</p>
-              <p className="text-2xl font-bold">3</p>
+              <p className="text-2xl font-bold">{stats.expired}</p>
             </div>
           </div>
         </Card>
@@ -95,7 +59,7 @@ export default function Subscriptions() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Total Members</p>
-              <p className="text-2xl font-bold">45</p>
+              <p className="text-2xl font-bold">{stats.total}</p>
             </div>
           </div>
         </Card>
@@ -104,7 +68,7 @@ export default function Subscriptions() {
       {/* Subscriptions List */}
       <Card className="p-6">
         <div className="space-y-4">
-          {sampleSubscriptions.map((subscription) => (
+          {subscriptions.map((subscription) => (
             <div
               key={subscription.id}
               className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-lg border bg-card hover:shadow-md transition-shadow gap-4"

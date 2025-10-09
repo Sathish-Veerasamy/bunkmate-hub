@@ -19,66 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-// Sample data
-const sampleDealers = [
-  {
-    id: 1,
-    dealerName: "Rajesh Kumar",
-    dealershipName: "Kumar Petroleum Services",
-    address: "123 Main Road, Dindigul - 624001",
-    contact: "9876543210",
-    email: "rajesh@example.com",
-    company: "IOC",
-    status: "Sale",
-    constitution: "Proprietor",
-    gstNo: "33AAAAA1234A1Z5",
-    establishedYear: "2015",
-    active: true,
-  },
-  {
-    id: 2,
-    dealerName: "Priya Sharma",
-    dealershipName: "Sharma Fuel Station",
-    address: "456 Market Street, Dindigul - 624002",
-    contact: "9876543211",
-    email: "priya@example.com",
-    company: "BPC",
-    status: "Dist",
-    constitution: "Partnership",
-    gstNo: "33BBBBB5678B1Z5",
-    establishedYear: "2018",
-    active: true,
-  },
-  {
-    id: 3,
-    dealerName: "Mohammed Ali",
-    dealershipName: "Ali Petro Center",
-    address: "789 Highway Road, Dindigul - 624003",
-    contact: "9876543212",
-    email: "ali@example.com",
-    company: "HPC",
-    status: "CRE",
-    constitution: "Limited",
-    gstNo: "33CCCCC9012C1Z5",
-    establishedYear: "2020",
-    active: false,
-  },
-  {
-    id: 4,
-    dealerName: "Lakshmi Devi",
-    dealershipName: "Devi Fuel Solutions",
-    address: "321 Temple Road, Dindigul - 624004",
-    contact: "9876543213",
-    email: "lakshmi@example.com",
-    company: "IOC",
-    status: "Sale",
-    constitution: "Proprietor",
-    gstNo: "33DDDDD3456D1Z5",
-    establishedYear: "2012",
-    active: true,
-  },
-];
+import { useDealers } from "@/store/dealers";
 
 type Column = {
   id: string;
@@ -93,6 +34,7 @@ interface DealersTableProps {
 
 export default function DealersTable({ searchQuery, onEdit }: DealersTableProps) {
   const navigate = useNavigate();
+  const { dealers } = useDealers();
   const [sortColumn, setSortColumn] = useState<string>("dealerName");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [columns, setColumns] = useState<Column[]>([
@@ -125,7 +67,7 @@ export default function DealersTable({ searchQuery, onEdit }: DealersTableProps)
   };
 
   const filteredAndSortedData = useMemo(() => {
-    let filtered = sampleDealers.filter((dealer) => {
+    let filtered = dealers.filter((dealer) => {
       const query = searchQuery.toLowerCase();
       return (
         dealer.dealerName.toLowerCase().includes(query) ||
@@ -145,7 +87,7 @@ export default function DealersTable({ searchQuery, onEdit }: DealersTableProps)
     });
 
     return filtered;
-  }, [searchQuery, sortColumn, sortDirection]);
+  }, [dealers, searchQuery, sortColumn, sortDirection]);
 
   const visibleColumns = columns.filter((col) => col.visible);
 

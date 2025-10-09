@@ -30,45 +30,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { UserPlus, Search, Pencil, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-type UserRole = "admin" | "dealer" | "proprietor" | "organizer";
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  status: "active" | "inactive";
-  createdAt: string;
-}
-
-// Mock data
-const mockUsers: User[] = [
-  {
-    id: "1",
-    name: "Admin User",
-    email: "admin@ddpwa.org",
-    role: "admin",
-    status: "active",
-    createdAt: "2024-01-15",
-  },
-  {
-    id: "2",
-    name: "Rajesh Kumar",
-    email: "rajesh@example.com",
-    role: "dealer",
-    status: "active",
-    createdAt: "2024-02-20",
-  },
-  {
-    id: "3",
-    name: "Priya Sharma",
-    email: "priya@example.com",
-    role: "proprietor",
-    status: "active",
-    createdAt: "2024-03-10",
-  },
-];
+import { useUsers, type UserRole } from "@/store/users";
 
 const roleColors: Record<UserRole, string> = {
   admin: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
@@ -78,17 +40,19 @@ const roleColors: Record<UserRole, string> = {
 };
 
 export default function Users() {
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const { users, addUser, updateUser, deleteUser } = useUsers();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editingUser, setEditingUser] = useState<number | null>(null);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    phone: "",
     role: "dealer" as UserRole,
-    status: "active" as "active" | "inactive",
+    dealership: "",
+    active: true,
   });
 
   const filteredUsers = users.filter(
@@ -98,51 +62,64 @@ export default function Users() {
       user.role.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (editingUser) {
-      setUsers(users.map(u => u.id === editingUser.id ? { ...editingUser, ...formData } : u));
+    try {
+      if (editingUser) {
+        await updateUser(editingUser, formData);
+        toast({
+          title: "User Updated",
+          description: "User has been updated successfully.",
+        });
+      } else {
+        await addUser(formData);
+        toast({
+          title: "User Added",
+          description: "New user has been added successfully.",
+        });
+      }
+
+      setIsDialogOpen(false);
+      setEditingUser(null);
+      setFormData({ name: "", email: "", phone: "", role: "dealer", dealership: "", active: true });
+    } catch (error) {
       toast({
-        title: "User Updated",
-        description: "User has been updated successfully.",
-      });
-    } else {
-      const newUser: User = {
-        id: Math.random().toString(36).substr(2, 9),
-        ...formData,
-        createdAt: new Date().toISOString().split("T")[0],
-      };
-      setUsers([...users, newUser]);
-      toast({
-        title: "User Added",
-        description: "New user has been added successfully.",
+        title: "Error",
+        description: "Failed to save user",
+        variant: "destructive",
       });
     }
-
-    setIsDialogOpen(false);
-    setEditingUser(null);
-    setFormData({ name: "", email: "", role: "dealer", status: "active" });
   };
 
-  const handleEdit = (user: User) => {
-    setEditingUser(user);
+  const handleEdit = (user: any) => {
+    setEditingUser(user.id);
     setFormData({
       name: user.name,
       email: user.email,
+      phone: user.phone,
       role: user.role,
-      status: user.status,
+      dealership: user.dealership || "",
+      active: user.active,
     });
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    setUsers(users.filter((u) => u.id !== id));
-    toast({
-      title: "User Deleted",
-      description: "User has been removed from the system.",
-      variant: "destructive",
-    });
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteUser(id);
+      toast({
+        title: "User Deleted",
+        description: "User has been removed from the system.",
+        variant: "destructive",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete user",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -170,7 +147,7 @@ export default function Users() {
             <DialogTrigger asChild>
               <Button onClick={() => {
                 setEditingUser(null);
-                setFormData({ name: "", email: "", role: "dealer", status: "active" });
+                setFormData({ name: "", email: "", phone: "", role: "dealer", dealership: "", active: true });
               }}>
                 <UserPlus className="h-4 w-4 mr-2" />
                 Add User
@@ -216,6 +193,19 @@ export default function Users() {
                   </div>
 
                   <div className="space-y-2">
+                    <Label htmlFor="phone">Phone</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) =>
+                        setFormData({ ...formData, phone: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
                     <Label htmlFor="role">Role</Label>
                     <Select
                       value={formData.role}
@@ -235,12 +225,25 @@ export default function Users() {
                     </Select>
                   </div>
 
+                  {(formData.role === "dealer" || formData.role === "proprietor") && (
+                    <div className="space-y-2">
+                      <Label htmlFor="dealership">Dealership</Label>
+                      <Input
+                        id="dealership"
+                        value={formData.dealership}
+                        onChange={(e) =>
+                          setFormData({ ...formData, dealership: e.target.value })
+                        }
+                      />
+                    </div>
+                  )}
+
                   <div className="space-y-2">
                     <Label htmlFor="status">Status</Label>
                     <Select
-                      value={formData.status}
+                      value={formData.active ? "active" : "inactive"}
                       onValueChange={(value: "active" | "inactive") =>
-                        setFormData({ ...formData, status: value })
+                        setFormData({ ...formData, active: value === "active" })
                       }
                     >
                       <SelectTrigger>
@@ -280,6 +283,7 @@ export default function Users() {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Phone</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
@@ -289,7 +293,7 @@ export default function Users() {
             <TableBody>
               {filteredUsers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
+                  <TableCell colSpan={7} className="text-center py-8">
                     No users found
                   </TableCell>
                 </TableRow>
@@ -298,6 +302,7 @@ export default function Users() {
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">{user.name}</TableCell>
                     <TableCell>{user.email}</TableCell>
+                    <TableCell>{user.phone}</TableCell>
                     <TableCell>
                       <Badge className={roleColors[user.role]} variant="secondary">
                         {user.role}
@@ -305,9 +310,9 @@ export default function Users() {
                     </TableCell>
                     <TableCell>
                       <Badge
-                        variant={user.status === "active" ? "default" : "secondary"}
+                        variant={user.active ? "default" : "secondary"}
                       >
-                        {user.status}
+                        {user.active ? "active" : "inactive"}
                       </Badge>
                     </TableCell>
                     <TableCell>{user.createdAt}</TableCell>

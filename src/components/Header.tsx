@@ -16,31 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNavigate } from "react-router-dom";
-
-// Mock notifications
-const notifications = [
-  {
-    id: 1,
-    title: "New Event Created",
-    message: "Annual General Meeting scheduled for next week",
-    time: "2 hours ago",
-    unread: true,
-  },
-  {
-    id: 2,
-    title: "Subscription Expiring",
-    message: "5 dealers have subscriptions expiring this month",
-    time: "5 hours ago",
-    unread: true,
-  },
-  {
-    id: 3,
-    title: "New Dealer Added",
-    message: "Rajesh Kumar joined as a new dealer",
-    time: "1 day ago",
-    unread: false,
-  },
-];
+import { useNotifications } from "@/store/notifications";
 
 // Mock user - in real app, this would come from auth context
 const currentUser = {
@@ -51,7 +27,8 @@ const currentUser = {
 
 export default function Header() {
   const navigate = useNavigate();
-  const unreadCount = notifications.filter((n) => n.unread).length;
+  const { notifications, getUnreadCount } = useNotifications();
+  const unreadCount = getUnreadCount();
 
   return (
     <div className="border-b bg-card">
