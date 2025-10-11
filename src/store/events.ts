@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 
 export type EventStatus = "upcoming" | "completed" | "cancelled";
+export type MeetingType = "internal" | "external";
+export type NotificationMode = "whatsapp" | "email" | "both";
 
 export type Event = {
   id: number;
@@ -9,7 +11,11 @@ export type Event = {
   time: string;
   venue: string;
   description: string;
-  attendees: number;
+  meetingType: MeetingType;
+  participants: string[]; // User IDs or names
+  attendeesList: string[]; // Actual attendees who joined
+  minutesOfMeeting?: string;
+  notificationModes: NotificationMode[];
   status: EventStatus;
 };
 
@@ -22,7 +28,10 @@ const initialEvents: Event[] = [
     time: "10:00 AM",
     venue: "DDPWA Office, Main Road, Dindigul",
     description: "Annual general meeting for all active dealers",
-    attendees: 45,
+    meetingType: "internal",
+    participants: ["John Doe", "Jane Smith", "Robert Kumar"],
+    attendeesList: [],
+    notificationModes: ["email", "whatsapp"],
     status: "upcoming",
   },
   {
@@ -32,7 +41,10 @@ const initialEvents: Event[] = [
     time: "2:00 PM",
     venue: "Community Hall, Market Street",
     description: "Mandatory safety training for all petroleum dealers",
-    attendees: 32,
+    meetingType: "external",
+    participants: ["All Active Dealers"],
+    attendeesList: [],
+    notificationModes: ["email"],
     status: "upcoming",
   },
   {
@@ -42,7 +54,11 @@ const initialEvents: Event[] = [
     time: "11:00 AM",
     venue: "District Collector Office",
     description: "Coordination meeting with district administration",
-    attendees: 28,
+    meetingType: "external",
+    participants: ["District Officials", "DDPWA Members"],
+    attendeesList: ["District Collector", "DDPWA President"],
+    minutesOfMeeting: "Discussed fuel distribution improvements and licensing procedures.",
+    notificationModes: ["email"],
     status: "completed",
   },
 ];
