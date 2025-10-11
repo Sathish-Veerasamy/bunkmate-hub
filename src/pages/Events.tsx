@@ -1,23 +1,26 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Calendar, MapPin, Users, Search, Mail, MessageSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Plus, Search, LayoutGrid, TableIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEvents, Event } from "@/store/events";
 import { EventForm } from "@/components/events/EventForm";
+import EventsTable from "@/components/events/EventsTable";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Events() {
-  const { events, addEvent, updateEvent, deleteEvent } = useEvents();
+  const { events, addEvent, updateEvent } = useEvents();
   const { toast } = useToast();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [meetingTypeFilter, setMeetingTypeFilter] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"grid" | "table">("table");
 
   const filteredEvents = events.filter((event) => {
     const matchesSearch =
@@ -93,10 +96,30 @@ export default function Events() {
             Create and manage events for active dealers
           </p>
         </div>
-        <Button className="gap-2" onClick={() => setIsFormOpen(true)}>
-          <Plus className="h-4 w-4" />
-          Create Event
-        </Button>
+        <div className="flex gap-2">
+          <div className="flex border rounded-lg">
+            <Button
+              variant={viewMode === "table" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("table")}
+              className="rounded-r-none"
+            >
+              <TableIcon className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "grid" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("grid")}
+              className="rounded-l-none"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+          </div>
+          <Button className="gap-2" onClick={() => setIsFormOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Create Event
+          </Button>
+        </div>
       </div>
 
       {/* Search and Filters */}
@@ -135,96 +158,92 @@ export default function Events() {
         </div>
       </Card>
 
-      {/* Events Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {filteredEvents.map((event) => (
-          <Card key={event.id} className="p-6 hover:shadow-lg transition-shadow">
-            <div className="space-y-4">
-              {/* Status and Type Badges */}
-              <div className="flex justify-between items-start">
-                <div className="flex gap-2">
-                  <Badge
-                    variant={event.status === "upcoming" ? "default" : "secondary"}
-                    className={
-                      event.status === "upcoming"
-                        ? "bg-accent hover:bg-accent/90"
-                        : ""
-                    }
-                  >
-                    {event.status}
-                  </Badge>
-                  <Badge variant="outline">{event.meetingType}</Badge>
-                </div>
-              </div>
+      {/* Events View */}
+      <Tabs value={viewMode} className="space-y-6">
+        <TabsContent value="table" className="mt-0">
+          <EventsTable
+            searchQuery={searchQuery}
+            statusFilter={statusFilter}
+            meetingTypeFilter={meetingTypeFilter}
+            onEdit={setEditingEvent}
+          />
+        </TabsContent>
 
-              {/* Event Title */}
-              <div>
-                <h3 className="font-semibold text-lg">{event.title}</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {event.description}
-                </p>
-              </div>
-
-              {/* Event Details */}
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  <span>
-                    {new Date(event.date).toLocaleDateString("en-IN", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}{" "}
-                    at {event.time}
-                  </span>
-                </div>
-                <div className="flex items-start gap-2 text-muted-foreground">
-                  <MapPin className="h-4 w-4 mt-0.5" />
-                  <span>{event.venue}</span>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Users className="h-4 w-4" />
-                  <span>{event.participants.length} participants</span>
-                </div>
-                {event.notificationModes.length > 0 && (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <div className="flex gap-1">
-                      {event.notificationModes.includes("email") && (
-                        <Mail className="h-4 w-4" />
-                      )}
-                      {event.notificationModes.includes("whatsapp") && (
-                        <MessageSquare className="h-4 w-4" />
-                      )}
+        <TabsContent value="grid" className="mt-0">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {filteredEvents.map((event) => (
+              <Card key={event.id} className="p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => window.location.href = `/events/${event.id}`}>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-start">
+                    <div className="flex gap-2">
+                      <Badge
+                        variant={event.status === "upcoming" ? "default" : "secondary"}
+                        className={
+                          event.status === "upcoming"
+                            ? "bg-accent hover:bg-accent/90 capitalize"
+                            : "capitalize"
+                        }
+                      >
+                        {event.status}
+                      </Badge>
+                      <Badge variant="outline" className="capitalize">{event.meetingType}</Badge>
                     </div>
-                    <span>Notifications enabled</span>
                   </div>
-                )}
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-2 pt-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => setEditingEvent(event)}
-                >
-                  Edit
-                </Button>
-                {event.status === "upcoming" && (
-                  <Button
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => handleNotifyUsers(event)}
-                  >
-                    Notify Dealers
-                  </Button>
-                )}
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+                  <div>
+                    <h3 className="font-semibold text-lg">{event.title}</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {event.description}
+                    </p>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <span>
+                        {new Date(event.date).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })}{" "}
+                        at {event.time}
+                      </span>
+                    </div>
+                    <div className="flex items-start gap-2 text-muted-foreground">
+                      <span className="truncate">{event.venue}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <span>{event.participants.length} participants</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingEvent(event);
+                      }}
+                    >
+                      Edit
+                    </Button>
+                    {event.status === "upcoming" && (
+                      <Button
+                        size="sm"
+                        className="flex-1"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleNotifyUsers(event);
+                        }}
+                      >
+                        Notify
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Create Event Dialog */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>

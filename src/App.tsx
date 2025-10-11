@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Dealers from "./pages/Dealers";
 import DealerDetails from "./pages/DealerDetails";
 import Events from "./pages/Events";
+import EventDetails from "./pages/EventDetails";
 import Subscriptions from "./pages/Subscriptions";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/dealers" element={<Dealers />} />
             <Route path="/dealers/:id" element={<DealerDetails />} />
             <Route path="/events" element={<Events />} />
+            <Route path="/events/:id" element={<EventDetails />} />
             <Route path="/subscriptions" element={<Subscriptions />} />
             <Route path="/users" element={<Users />} />
             <Route path="/settings" element={<Settings />} />
