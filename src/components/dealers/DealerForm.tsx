@@ -12,8 +12,11 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, X } from "lucide-react";
+import { Upload, X, ChevronRight, ChevronLeft } from "lucide-react";
 import { useState } from "react";
+import ProprietorForm from "./ProprietorForm";
+import PartnershipForm from "./PartnershipForm";
+import LimitedForm from "./LimitedForm";
 
 interface DealerFormProps {
   dealer?: any;
@@ -22,10 +25,15 @@ interface DealerFormProps {
 
 export default function DealerForm({ dealer, onClose }: DealerFormProps) {
   const { toast } = useToast();
+  const [step, setStep] = useState(1);
+  const [bunkData, setBunkData] = useState<any>(dealer || {});
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  
   const { register, handleSubmit, setValue, watch } = useForm({
     defaultValues: dealer || {},
   });
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+
+  const constitution = watch("constitution");
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -38,9 +46,22 @@ export default function DealerForm({ dealer, onClose }: DealerFormProps) {
     setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const onSubmit = (data: any) => {
-    console.log("Form data:", data);
-    console.log("Uploaded files:", uploadedFiles);
+  const onBunkDetailsSubmit = (data: any) => {
+    if (!data.constitution) {
+      toast({
+        title: "Constitution Required",
+        description: "Please select the constitution type to proceed.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setBunkData({ ...bunkData, ...data, uploadedFiles });
+    setStep(2);
+  };
+
+  const onFinalSubmit = (userData: any) => {
+    const finalData = { ...bunkData, ...userData };
+    console.log("Final form data:", finalData);
     toast({
       title: dealer ? "Dealer Updated" : "Dealer Added",
       description: dealer
@@ -50,19 +71,28 @@ export default function DealerForm({ dealer, onClose }: DealerFormProps) {
     onClose();
   };
 
-  return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Dealer/Partner Name */}
-        <div className="space-y-2">
-          <Label htmlFor="dealerName">Name of Dealer/Partner *</Label>
-          <Input
-            id="dealerName"
-            {...register("dealerName", { required: true })}
-            placeholder="Enter full name"
-          />
-        </div>
+  const handleBack = () => {
+    setStep(1);
+  };
 
+  if (step === 2) {
+    if (constitution === "Proprietor") {
+      return <ProprietorForm onSubmit={onFinalSubmit} onBack={handleBack} defaultValues={bunkData} />;
+    } else if (constitution === "Partnership") {
+      return <PartnershipForm onSubmit={onFinalSubmit} onBack={handleBack} defaultValues={bunkData} />;
+    } else if (constitution === "Limited") {
+      return <LimitedForm onSubmit={onFinalSubmit} onBack={handleBack} defaultValues={bunkData} />;
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onBunkDetailsSubmit)} className="space-y-6">
+      <div className="mb-4">
+        <h3 className="text-lg font-semibold">Step 1: Bunk Details</h3>
+        <p className="text-sm text-muted-foreground">Enter the dealership information</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Dealership Name */}
         <div className="space-y-2">
           <Label htmlFor="dealershipName">Name of Dealership *</Label>
@@ -71,6 +101,24 @@ export default function DealerForm({ dealer, onClose }: DealerFormProps) {
             {...register("dealershipName", { required: true })}
             placeholder="Enter dealership name"
           />
+        </div>
+
+        {/* Name of Company */}
+        <div className="space-y-2">
+          <Label htmlFor="company">Name of Company *</Label>
+          <Select
+            defaultValue={dealer?.company}
+            onValueChange={(value) => setValue("company", value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select company" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="IOC">IOC</SelectItem>
+              <SelectItem value="BPC">BPC</SelectItem>
+              <SelectItem value="HPC">HPC</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Address */}
@@ -121,107 +169,6 @@ export default function DealerForm({ dealer, onClose }: DealerFormProps) {
           />
         </div>
 
-        {/* Emergency Contact */}
-        <div className="space-y-2">
-          <Label htmlFor="emergencyContact">Emergency Contact</Label>
-          <Input
-            id="emergencyContact"
-            {...register("emergencyContact")}
-            placeholder="9876543211"
-          />
-        </div>
-
-        {/* Aadhar Number */}
-        <div className="space-y-2">
-          <Label htmlFor="aadharNumber">Aadhar Number</Label>
-          <Input
-            id="aadharNumber"
-            {...register("aadharNumber")}
-            placeholder="1234 5678 9012"
-          />
-        </div>
-
-        {/* Date of Birth */}
-        <div className="space-y-2">
-          <Label htmlFor="dateOfBirth">Date of Birth</Label>
-          <Input id="dateOfBirth" type="date" {...register("dateOfBirth")} />
-        </div>
-
-        {/* Education Qualification */}
-        <div className="space-y-2">
-          <Label htmlFor="education">Education Qualification</Label>
-          <Input
-            id="education"
-            {...register("education")}
-            placeholder="Enter qualification"
-          />
-        </div>
-
-        {/* Gender */}
-        <div className="space-y-2">
-          <Label>Gender</Label>
-          <RadioGroup
-            defaultValue={dealer?.gender}
-            onValueChange={(value) => setValue("gender", value)}
-          >
-            <div className="flex gap-4">
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="M" id="male" />
-                <Label htmlFor="male" className="font-normal">
-                  Male
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="F" id="female" />
-                <Label htmlFor="female" className="font-normal">
-                  Female
-                </Label>
-              </div>
-            </div>
-          </RadioGroup>
-        </div>
-
-        {/* Blood Group */}
-        <div className="space-y-2">
-          <Label htmlFor="bloodGroup">Blood Group</Label>
-          <Select
-            defaultValue={dealer?.bloodGroup}
-            onValueChange={(value) => setValue("bloodGroup", value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select blood group" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="A+">A+</SelectItem>
-              <SelectItem value="A-">A-</SelectItem>
-              <SelectItem value="B+">B+</SelectItem>
-              <SelectItem value="B-">B-</SelectItem>
-              <SelectItem value="O+">O+</SelectItem>
-              <SelectItem value="O-">O-</SelectItem>
-              <SelectItem value="AB+">AB+</SelectItem>
-              <SelectItem value="AB-">AB-</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Name of Company */}
-        <div className="space-y-2">
-          <Label htmlFor="company">Name of Company *</Label>
-          <Select
-            defaultValue={dealer?.company}
-            onValueChange={(value) => setValue("company", value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select company" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="IOC">IOC</SelectItem>
-              <SelectItem value="BPC">BPC</SelectItem>
-              <SelectItem value="HPC">HPC</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
         {/* Status of Dealership */}
         <div className="space-y-2">
           <Label>Status of Dealership *</Label>
@@ -254,7 +201,7 @@ export default function DealerForm({ dealer, onClose }: DealerFormProps) {
 
         {/* Constitution */}
         <div className="space-y-2">
-          <Label htmlFor="constitution">Constitution</Label>
+          <Label htmlFor="constitution">Constitution *</Label>
           <Select
             defaultValue={dealer?.constitution}
             onValueChange={(value) => setValue("constitution", value)}
@@ -266,7 +213,6 @@ export default function DealerForm({ dealer, onClose }: DealerFormProps) {
               <SelectItem value="Proprietor">Proprietor</SelectItem>
               <SelectItem value="Partnership">Partnership</SelectItem>
               <SelectItem value="Limited">Limited</SelectItem>
-              <SelectItem value="Others">Others</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -371,7 +317,7 @@ export default function DealerForm({ dealer, onClose }: DealerFormProps) {
           Cancel
         </Button>
         <Button type="submit">
-          {dealer ? "Update Dealer" : "Submit Application"}
+          Next <ChevronRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
     </form>
