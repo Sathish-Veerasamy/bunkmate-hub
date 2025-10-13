@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dialog";
 
 export default function Dealers() {
-  const [searchQuery, setSearchQuery] = useState("");
+  
   const [showForm, setShowForm] = useState(false);
   const [editingDealer, setEditingDealer] = useState<any>(null);
 
@@ -54,18 +54,7 @@ export default function Dealers() {
 
       {/* Actions Bar */}
       <Card className="p-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          {/* Search */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search dealers by name, dealership, contact..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-end">
           {/* Action Buttons */}
           <div className="flex flex-wrap gap-2">
             <Button onClick={handleAddDealer} className="gap-2">
@@ -90,10 +79,7 @@ export default function Dealers() {
 
       {/* Table Card */}
       <Card className="p-6">
-        <DealersTable
-          searchQuery={searchQuery}
-          onEdit={handleEditDealer}
-        />
+        <DealersTable onEdit={handleEditDealer} />
       </Card>
 
       {/* Add/Edit Dealer Dialog */}
