@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Mail, Phone, MapPin } from "lucide-react";
+import SubscriptionsTable from "@/components/subscriptions/SubscriptionsTable";
 
 // Sample data - in production, fetch from API/database
 const getDealerById = (id: string) => {
@@ -43,12 +44,6 @@ const getDealerById = (id: string) => {
   ];
   return dealers.find((d) => d.id === parseInt(id));
 };
-
-const sampleSubscriptions = [
-  { year: "2024", amount: "₹5,000", status: "Paid", date: "2024-01-15" },
-  { year: "2023", amount: "₹5,000", status: "Paid", date: "2023-01-10" },
-  { year: "2022", amount: "₹4,500", status: "Paid", date: "2022-01-12" },
-];
 
 const sampleDonations = [
   { date: "2024-08-15", purpose: "Independence Day Event", amount: "₹10,000" },
@@ -240,37 +235,7 @@ export default function DealerDetails() {
 
         {/* Subscriptions Tab */}
         <TabsContent value="subscriptions">
-          <Card>
-            <CardHeader>
-              <CardTitle>Subscription History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Year</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Payment Date</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sampleSubscriptions.map((sub, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="font-medium">{sub.year}</TableCell>
-                      <TableCell>{sub.amount}</TableCell>
-                      <TableCell>{sub.date}</TableCell>
-                      <TableCell>
-                        <Badge className="bg-success hover:bg-success/90">
-                          {sub.status}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+          <SubscriptionsTable dealerId={dealer.id} />
         </TabsContent>
 
         {/* Donations Tab */}

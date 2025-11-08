@@ -4,10 +4,13 @@ export type SubscriptionStatus = "active" | "expiring" | "expired";
 
 export type Subscription = {
   id: number;
+  dealerId: number;
   dealerName: string;
   dealershipName: string;
   membershipNo: string;
-  renewalDate: string;
+  period: string; // e.g., "2022-2023", "2023-2024"
+  paymentDate: string;
+  paymentTime: string;
   status: SubscriptionStatus;
   amount: number;
 };
@@ -16,37 +19,61 @@ export type Subscription = {
 const initialSubscriptions: Subscription[] = [
   {
     id: 1,
+    dealerId: 1,
     dealerName: "Rajesh Kumar",
     dealershipName: "Kumar Petroleum Services",
     membershipNo: "DDPWA001",
-    renewalDate: "2026-03-31",
+    period: "2024-2025",
+    paymentDate: "2024-04-15",
+    paymentTime: "10:30 AM",
     status: "active",
     amount: 5000,
   },
   {
     id: 2,
-    dealerName: "Priya Sharma",
-    dealershipName: "Sharma Fuel Station",
-    membershipNo: "DDPWA002",
-    renewalDate: "2025-12-31",
+    dealerId: 1,
+    dealerName: "Rajesh Kumar",
+    dealershipName: "Kumar Petroleum Services",
+    membershipNo: "DDPWA001",
+    period: "2023-2024",
+    paymentDate: "2023-04-10",
+    paymentTime: "02:15 PM",
     status: "active",
     amount: 5000,
   },
   {
     id: 3,
-    dealerName: "Mohammed Ali",
-    dealershipName: "Ali Petro Center",
-    membershipNo: "DDPWA003",
-    renewalDate: "2025-06-30",
-    status: "expiring",
+    dealerId: 2,
+    dealerName: "Priya Sharma",
+    dealershipName: "Sharma Fuel Station",
+    membershipNo: "DDPWA002",
+    period: "2024-2025",
+    paymentDate: "2024-05-20",
+    paymentTime: "11:00 AM",
+    status: "active",
     amount: 5000,
   },
   {
     id: 4,
+    dealerId: 3,
+    dealerName: "Mohammed Ali",
+    dealershipName: "Ali Petro Center",
+    membershipNo: "DDPWA003",
+    period: "2024-2025",
+    paymentDate: "2024-03-25",
+    paymentTime: "09:45 AM",
+    status: "expiring",
+    amount: 5000,
+  },
+  {
+    id: 5,
+    dealerId: 4,
     dealerName: "Lakshmi Devi",
     dealershipName: "Devi Fuel Solutions",
     membershipNo: "DDPWA004",
-    renewalDate: "2025-03-15",
+    period: "2023-2024",
+    paymentDate: "2023-03-15",
+    paymentTime: "03:30 PM",
     status: "expired",
     amount: 5000,
   },
@@ -69,7 +96,9 @@ export const subscriptionsAPI = {
   getByDealerId: async (dealerId: number): Promise<Subscription[]> => {
     // TODO: Replace with actual API call
     // return await fetch(`/api/subscriptions?dealerId=${dealerId}`).then(res => res.json());
-    return Promise.resolve(initialSubscriptions);
+    return Promise.resolve(
+      initialSubscriptions.filter((s) => s.dealerId === dealerId)
+    );
   },
 
   create: async (
@@ -95,12 +124,18 @@ export const subscriptionsAPI = {
     // TODO: Replace with actual API call
     // return await fetch(`/api/subscriptions/${id}/renew`, { method: 'POST' }).then(res => res.json());
     const existing = initialSubscriptions.find((s) => s.id === id);
-    const renewalDate = new Date();
-    renewalDate.setFullYear(renewalDate.getFullYear() + 1);
+    const currentYear = new Date().getFullYear();
+    const newPeriod = `${currentYear}-${currentYear + 1}`;
+    const now = new Date();
     return Promise.resolve({
       ...existing!,
       status: "active",
-      renewalDate: renewalDate.toISOString().split("T")[0],
+      period: newPeriod,
+      paymentDate: now.toISOString().split("T")[0],
+      paymentTime: now.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
     });
   },
 };

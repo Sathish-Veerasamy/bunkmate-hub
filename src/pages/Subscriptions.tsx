@@ -1,8 +1,7 @@
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { CreditCard, CheckCircle2, XCircle } from "lucide-react";
 import { useSubscriptions } from "@/store/subscriptions";
+import SubscriptionsTable from "@/components/subscriptions/SubscriptionsTable";
 
 export default function Subscriptions() {
   const { subscriptions, getStats } = useSubscriptions();
@@ -65,73 +64,8 @@ export default function Subscriptions() {
         </Card>
       </div>
 
-      {/* Subscriptions List */}
-      <Card className="p-6">
-        <div className="space-y-4">
-          {subscriptions.map((subscription) => (
-            <div
-              key={subscription.id}
-              className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-lg border bg-card hover:shadow-md transition-shadow gap-4"
-            >
-              <div className="flex-1 space-y-1">
-                <div className="flex items-center gap-3">
-                  <h3 className="font-semibold">{subscription.dealerName}</h3>
-                  <Badge
-                    variant={
-                      subscription.status === "active"
-                        ? "default"
-                        : subscription.status === "expiring"
-                        ? "secondary"
-                        : "outline"
-                    }
-                    className={
-                      subscription.status === "active"
-                        ? "bg-success hover:bg-success/90"
-                        : subscription.status === "expiring"
-                        ? "bg-accent hover:bg-accent/90"
-                        : "border-destructive text-destructive"
-                    }
-                  >
-                    {subscription.status === "active" && "Active"}
-                    {subscription.status === "expiring" && "Expiring Soon"}
-                    {subscription.status === "expired" && "Expired"}
-                  </Badge>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {subscription.dealershipName}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Membership No: {subscription.membershipNo}
-                </p>
-              </div>
-
-              <div className="flex flex-col md:items-end gap-1">
-                <p className="text-sm font-medium">₹{subscription.amount}</p>
-                <p className="text-sm text-muted-foreground">
-                  Renewal:{" "}
-                  {new Date(subscription.renewalDate).toLocaleDateString(
-                    "en-IN",
-                    {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    }
-                  )}
-                </p>
-              </div>
-
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm">
-                  View Details
-                </Button>
-                {subscription.status !== "active" && (
-                  <Button size="sm">Renew</Button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
+      {/* Subscriptions Table */}
+      <SubscriptionsTable />
     </div>
   );
 }
