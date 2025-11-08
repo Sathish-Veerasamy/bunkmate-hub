@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, Pencil, Trash2, ArrowUpDown, Settings2, Search, Filter, X } from "lucide-react";
+import { Eye, Pencil, Trash2, ArrowUpDown, Settings2, Search, Filter, X, Plus } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -70,6 +70,7 @@ export default function DataTable({
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [columns, setColumns] = useState<DataTableColumn[]>(initialColumns);
   const [fieldFilters, setFieldFilters] = useState<Record<string, string>>({});
+  const [selectedFilterField, setSelectedFilterField] = useState<string>("");
 
   const toggleColumn = (columnId: string) => {
     const updatedColumns = columns.map((col) =>
@@ -89,7 +90,7 @@ export default function DataTable({
   };
 
   const handleFilterChange = (columnId: string, value: string) => {
-    if (value === "all") {
+    if (value === "all" || value === "") {
       const newFilters = { ...fieldFilters };
       delete newFilters[columnId];
       setFieldFilters(newFilters);
@@ -102,6 +103,17 @@ export default function DataTable({
     const newFilters = { ...fieldFilters };
     delete newFilters[columnId];
     setFieldFilters(newFilters);
+  };
+
+  const addFilter = () => {
+    if (selectedFilterField && !fieldFilters[selectedFilterField]) {
+      setFieldFilters({ ...fieldFilters, [selectedFilterField]: "" });
+      setSelectedFilterField("");
+    }
+  };
+
+  const getColumnById = (columnId: string) => {
+    return columns.find(col => col.id === columnId);
   };
 
   const filteredAndSortedData = useMemo(() => {
@@ -159,12 +171,15 @@ export default function DataTable({
     }
   };
 
-  const filterableColumns = columns.filter((col) => col.filterable && col.visible);
-  const activeFiltersCount = Object.keys(fieldFilters).length;
+  const filterableColumns = columns.filter((col) => col.filterable);
+  const activeFilters = Object.entries(fieldFilters);
+  const availableFilterColumns = filterableColumns.filter(
+    col => !fieldFilters.hasOwnProperty(col.id)
+  );
 
   return (
     <div className="space-y-4">
-      {/* Search and Column Selector */}
+      {/* Search and Controls */}
       <div className="flex items-center justify-between gap-4">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -176,55 +191,84 @@ export default function DataTable({
           />
         </div>
         
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Settings2 className="h-4 w-4" />
-              Columns
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {columns.map((column) => (
-              <DropdownMenuCheckboxItem
-                key={column.id}
-                checked={column.visible}
-                onCheckedChange={() => toggleColumn(column.id)}
-              >
-                {column.label}
-              </DropdownMenuCheckboxItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center gap-2">
+          {/* Add Filter Dropdown */}
+          {availableFilterColumns.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Add Filter
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuLabel>Select Field to Filter</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {availableFilterColumns.map((column) => (
+                  <DropdownMenuCheckboxItem
+                    key={column.id}
+                    checked={false}
+                    onCheckedChange={() => {
+                      setFieldFilters({ ...fieldFilters, [column.id]: "" });
+                    }}
+                  >
+                    {column.label}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Settings2 className="h-4 w-4" />
+                Columns
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {columns.map((column) => (
+                <DropdownMenuCheckboxItem
+                  key={column.id}
+                  checked={column.visible}
+                  onCheckedChange={() => toggleColumn(column.id)}
+                >
+                  {column.label}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
-      {/* Field Filters */}
-      {filterableColumns.length > 0 && (
+      {/* Active Filters */}
+      {activeFilters.length > 0 && (
         <div className="space-y-3">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 text-sm font-medium">
             <Filter className="h-4 w-4" />
-            <span>Filters</span>
-            {activeFiltersCount > 0 && (
-              <Badge variant="secondary" className="ml-1">
-                {activeFiltersCount}
-              </Badge>
-            )}
+            <span>Active Filters ({activeFilters.length})</span>
           </div>
           <div className="flex flex-wrap gap-3">
-            {filterableColumns.map((column) => (
-              <div key={column.id} className="flex items-center gap-2">
-                {column.filterType === "select" && column.filterOptions ? (
-                  <div className="flex items-center gap-2">
+            {activeFilters.map(([columnId, filterValue]) => {
+              const column = getColumnById(columnId);
+              if (!column) return null;
+
+              return (
+                <div key={columnId} className="flex items-center gap-2 p-2 border rounded-lg bg-muted/50">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {column.label}:
+                  </span>
+                  {column.filterType === "select" && column.filterOptions ? (
                     <Select
-                      value={fieldFilters[column.id] || "all"}
-                      onValueChange={(value) => handleFilterChange(column.id, value)}
+                      value={filterValue || ""}
+                      onValueChange={(value) => handleFilterChange(columnId, value)}
                     >
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder={`Filter by ${column.label}`} />
+                      <SelectTrigger className="h-8 w-[160px]">
+                        <SelectValue placeholder="Select value" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All {column.label}</SelectItem>
                         {column.filterOptions.map((option) => (
                           <SelectItem key={option.value} value={option.value}>
                             {option.label}
@@ -232,39 +276,25 @@ export default function DataTable({
                         ))}
                       </SelectContent>
                     </Select>
-                    {fieldFilters[column.id] && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => clearFilter(column.id)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                ) : column.filterType === "text" ? (
-                  <div className="relative">
+                  ) : (
                     <Input
-                      placeholder={`Filter ${column.label}...`}
-                      value={fieldFilters[column.id] || ""}
-                      onChange={(e) => handleFilterChange(column.id, e.target.value)}
-                      className="w-[180px]"
+                      placeholder="Enter value..."
+                      value={filterValue || ""}
+                      onChange={(e) => handleFilterChange(columnId, e.target.value)}
+                      className="h-8 w-[160px]"
                     />
-                    {fieldFilters[column.id] && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-0 top-0 h-full w-8"
-                        onClick={() => clearFilter(column.id)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                ) : null}
-              </div>
-            ))}
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => clearFilter(columnId)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
