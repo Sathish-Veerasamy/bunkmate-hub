@@ -11,14 +11,40 @@ export default function DealersTable({ onEdit }: DealersTableProps) {
   const navigate = useNavigate();
   const { dealers } = useDealers();
 
+  // Get unique values for filters
+  const uniqueCompanies = Array.from(new Set(dealers.map(d => d.company)));
+  const uniqueStatuses = Array.from(new Set(dealers.map(d => d.status)));
+  const uniqueConstitutions = Array.from(new Set(dealers.map(d => d.constitution)));
+
   const columns: DataTableColumn[] = [
     { id: "dealerName", label: "Dealer Name", visible: true },
     { id: "dealershipName", label: "Dealership Name", visible: true },
     { id: "contact", label: "Contact", visible: true },
     { id: "email", label: "Email", visible: true },
-    { id: "company", label: "Company", visible: true },
-    { id: "status", label: "Status", visible: true },
-    { id: "constitution", label: "Constitution", visible: false },
+    { 
+      id: "company", 
+      label: "Company", 
+      visible: true,
+      filterable: true,
+      filterType: "select",
+      filterOptions: uniqueCompanies.map(c => ({ label: c, value: c })),
+    },
+    { 
+      id: "status", 
+      label: "Status", 
+      visible: true,
+      filterable: true,
+      filterType: "select",
+      filterOptions: uniqueStatuses.map(s => ({ label: s, value: s })),
+    },
+    { 
+      id: "constitution", 
+      label: "Constitution", 
+      visible: false,
+      filterable: true,
+      filterType: "select",
+      filterOptions: uniqueConstitutions.map(c => ({ label: c, value: c })),
+    },
     { id: "gstNo", label: "GST No", visible: false },
     { id: "address", label: "Address", visible: false },
     {
@@ -26,6 +52,12 @@ export default function DealersTable({ onEdit }: DealersTableProps) {
       label: "Active Status",
       visible: true,
       sortable: false,
+      filterable: true,
+      filterType: "select",
+      filterOptions: [
+        { label: "Active", value: "true" },
+        { label: "Inactive", value: "false" },
+      ],
       render: (value: boolean) => (
         <Badge
           variant={value ? "default" : "secondary"}

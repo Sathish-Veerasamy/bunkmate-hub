@@ -21,6 +21,10 @@ export default function EventsTable({
   const navigate = useNavigate();
   const { events } = useEvents();
 
+  // Get unique values for filters
+  const uniqueStatuses = Array.from(new Set(events.map(e => e.status)));
+  const uniqueMeetingTypes = Array.from(new Set(events.map(e => e.meetingType)));
+
   const filteredData = useMemo(() => {
     return events.filter((event) => {
       const matchesSearch =
@@ -82,6 +86,9 @@ export default function EventsTable({
       id: "meetingType", 
       label: "Meeting Type", 
       visible: true,
+      filterable: true,
+      filterType: "select",
+      filterOptions: uniqueMeetingTypes.map(m => ({ label: m.charAt(0).toUpperCase() + m.slice(1), value: m })),
       render: (value) => (
         <Badge variant="outline" className="capitalize">
           {value}
@@ -92,6 +99,9 @@ export default function EventsTable({
       id: "status", 
       label: "Status", 
       visible: true,
+      filterable: true,
+      filterType: "select",
+      filterOptions: uniqueStatuses.map(s => ({ label: s.charAt(0).toUpperCase() + s.slice(1), value: s })),
       render: (value) => (
         <Badge
           variant={value === "upcoming" ? "default" : "secondary"}

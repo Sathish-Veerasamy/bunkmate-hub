@@ -16,11 +16,29 @@ export default function SubscriptionsTable({ dealerId }: SubscriptionsTableProps
     ? subscriptions.filter((sub) => sub.dealerId === dealerId)
     : subscriptions;
 
+  // Get unique values for filters
+  const uniquePeriods = Array.from(new Set(filteredSubscriptions.map(s => s.period)));
+  const uniqueDealerNames = Array.from(new Set(filteredSubscriptions.map(s => s.dealerName)));
+
   const columns: DataTableColumn[] = [
-    { id: "dealerName", label: "Dealer Name", visible: !dealerId },
+    { 
+      id: "dealerName", 
+      label: "Dealer Name", 
+      visible: !dealerId,
+      filterable: !dealerId,
+      filterType: "select",
+      filterOptions: uniqueDealerNames.map(n => ({ label: n, value: n })),
+    },
     { id: "dealershipName", label: "Dealership Name", visible: true },
     { id: "membershipNo", label: "Membership No", visible: true },
-    { id: "period", label: "Period", visible: true },
+    { 
+      id: "period", 
+      label: "Period", 
+      visible: true,
+      filterable: true,
+      filterType: "select",
+      filterOptions: uniquePeriods.map(p => ({ label: p, value: p })),
+    },
     { id: "amount", label: "Amount", visible: true, render: (value: number) => `₹${value}` },
     { id: "paymentDate", label: "Payment Date", visible: true },
     { id: "paymentTime", label: "Payment Time", visible: true },
@@ -29,6 +47,13 @@ export default function SubscriptionsTable({ dealerId }: SubscriptionsTableProps
       label: "Status",
       visible: true,
       sortable: false,
+      filterable: true,
+      filterType: "select",
+      filterOptions: [
+        { label: "Active", value: "active" },
+        { label: "Expiring Soon", value: "expiring" },
+        { label: "Expired", value: "expired" },
+      ],
       render: (value: string) => {
         let className = "";
         let label = "";
