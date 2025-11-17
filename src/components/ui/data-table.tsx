@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import {
   Table,
   TableBody,
@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, Pencil, Trash2, ArrowUpDown, Settings2, Search, Filter, X, Plus } from "lucide-react";
+import { Eye, Pencil, Trash2, ArrowUpDown, Settings2, Search, Filter, X, Plus, Download, Upload, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -56,6 +56,8 @@ interface DataTableProps {
   actions?: DataTableAction[];
   searchableFields?: string[];
   onColumnToggle?: (columns: DataTableColumn[]) => void;
+  onImport?: (data: any[]) => void;
+  exportFileName?: string;
 }
 
 export default function DataTable({
@@ -64,6 +66,8 @@ export default function DataTable({
   actions = [],
   searchableFields = [],
   onColumnToggle,
+  onImport,
+  exportFileName = "export",
 }: DataTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortColumn, setSortColumn] = useState<string>("");
@@ -71,6 +75,9 @@ export default function DataTable({
   const [columns, setColumns] = useState<DataTableColumn[]>(initialColumns);
   const [fieldFilters, setFieldFilters] = useState<Record<string, string>>({});
   const [selectedFilterField, setSelectedFilterField] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [recordsPerPage, setRecordsPerPage] = useState(10);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const toggleColumn = (columnId: string) => {
     const updatedColumns = columns.map((col) =>
@@ -177,21 +184,95 @@ export default function DataTable({
     col => !fieldFilters.hasOwnProperty(col.id)
   );
 
+  // Pagination
+  const totalRecords = filteredAndSortedData.length;
+  const totalPages = Math.ceil(totalRecords / recordsPerPage);
+  const startIndex = (currentPage - 1) * recordsPerPage;
+  const endIndex = startIndex + recordsPerPage;
+  const paginatedData = filteredAndSortedData.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  const handleFilterOrSearchChange = () => {
+    setCurrentPage(1);
+  };
+
+  // Export functionality
+  const handleExport = () => {
+    const visibleColumns = columns.filter(col => col.visible);
+    const headers = visibleColumns.map(col => col.label).join(",");
+    const rows = filteredAndSortedData.map(row => {
+      return visibleColumns.map(col => {
+        const value = row[col.id];
+        const stringValue = value?.toString() || "";
+        // Escape commas and quotes
+        return stringValue.includes(",") || stringValue.includes('"') 
+          ? `"${stringValue.replace(/"/g, '""')}"` 
+          : stringValue;
+      }).join(",");
+    }).join("\n");
+    
+    const csv = `${headers}\n${rows}`;
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${exportFileName}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Import functionality
+  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !onImport) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      const lines = text.split("\n").filter(line => line.trim());
+      if (lines.length < 2) return;
+
+      const headers = lines[0].split(",").map(h => h.trim());
+      const importedData = lines.slice(1).map(line => {
+        const values = line.split(",").map(v => v.trim().replace(/^"|"$/g, ""));
+        const row: any = {};
+        headers.forEach((header, index) => {
+          const column = columns.find(col => col.label === header);
+          if (column) {
+            row[column.id] = values[index];
+          }
+        });
+        return row;
+      });
+
+      onImport(importedData);
+    };
+    reader.readAsText(file);
+    
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Search and Controls */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              handleFilterOrSearchChange();
+            }}
             className="pl-9"
           />
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {/* Add Filter Dropdown */}
           {availableFilterColumns.length > 0 && (
             <DropdownMenu>
@@ -210,6 +291,7 @@ export default function DataTable({
                     checked={false}
                     onCheckedChange={() => {
                       setFieldFilters({ ...fieldFilters, [column.id]: "" });
+                      handleFilterOrSearchChange();
                     }}
                   >
                     {column.label}
@@ -240,6 +322,32 @@ export default function DataTable({
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
+
+          <Button variant="outline" size="sm" className="gap-2" onClick={handleExport}>
+            <Download className="h-4 w-4" />
+            Export
+          </Button>
+
+          {onImport && (
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                onChange={handleImport}
+                className="hidden"
+              />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="gap-2"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="h-4 w-4" />
+                Import
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -280,7 +388,10 @@ export default function DataTable({
                     <Input
                       placeholder="Enter value..."
                       value={filterValue || ""}
-                      onChange={(e) => handleFilterChange(columnId, e.target.value)}
+                      onChange={(e) => {
+                        handleFilterChange(columnId, e.target.value);
+                        handleFilterOrSearchChange();
+                      }}
                       className="h-8 w-[160px]"
                     />
                   )}
@@ -288,7 +399,10 @@ export default function DataTable({
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
-                    onClick={() => clearFilter(columnId)}
+                    onClick={() => {
+                      clearFilter(columnId);
+                      handleFilterOrSearchChange();
+                    }}
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -327,7 +441,7 @@ export default function DataTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredAndSortedData.length === 0 ? (
+            {paginatedData.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={visibleColumns.length + (actions.length > 0 ? 1 : 0)}
@@ -337,7 +451,7 @@ export default function DataTable({
                 </TableCell>
               </TableRow>
             ) : (
-              filteredAndSortedData.map((row, index) => (
+              paginatedData.map((row, index) => (
                 <TableRow key={row.id || index}>
                   {actions.length > 0 && (
                     <TableCell>
@@ -372,6 +486,84 @@ export default function DataTable({
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Pagination Controls */}
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <div>
+            Showing {totalRecords === 0 ? 0 : startIndex + 1} to {Math.min(endIndex, totalRecords)} of {totalRecords} records
+          </div>
+          <div className="flex items-center gap-2">
+            <span>Records per page:</span>
+            <Select
+              value={recordsPerPage.toString()}
+              onValueChange={(value) => {
+                setRecordsPerPage(Number(value));
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className="h-8 w-[70px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Previous
+          </Button>
+          
+          <div className="flex items-center gap-1">
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNumber;
+              if (totalPages <= 5) {
+                pageNumber = i + 1;
+              } else if (currentPage <= 3) {
+                pageNumber = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNumber = totalPages - 4 + i;
+              } else {
+                pageNumber = currentPage - 2 + i;
+              }
+
+              return (
+                <Button
+                  key={pageNumber}
+                  variant={currentPage === pageNumber ? "default" : "outline"}
+                  size="sm"
+                  className="w-8 h-8 p-0"
+                  onClick={() => setCurrentPage(pageNumber)}
+                >
+                  {pageNumber}
+                </Button>
+              );
+            })}
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(currentPage + 1)}
+            disabled={currentPage === totalPages || totalPages === 0}
+          >
+            Next
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </div>
   );
