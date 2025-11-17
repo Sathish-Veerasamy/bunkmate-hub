@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, Pencil, Trash2, ArrowUpDown, Settings2, Search, Filter, X, Plus, Download, Upload, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   DropdownMenu,
@@ -57,6 +58,7 @@ interface DataTableProps {
   searchableFields?: string[];
   onColumnToggle?: (columns: DataTableColumn[]) => void;
   onImport?: (data: any[]) => void;
+  onBulkDelete?: (selectedIds: any[]) => void;
   exportFileName?: string;
 }
 
@@ -67,6 +69,7 @@ export default function DataTable({
   searchableFields = [],
   onColumnToggle,
   onImport,
+  onBulkDelete,
   exportFileName = "export",
 }: DataTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -77,6 +80,7 @@ export default function DataTable({
   const [selectedFilterField, setSelectedFilterField] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(10);
+  const [selectedRows, setSelectedRows] = useState<Set<any>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const toggleColumn = (columnId: string) => {
@@ -196,11 +200,40 @@ export default function DataTable({
     setCurrentPage(1);
   };
 
-  // Export functionality
-  const handleExport = () => {
+  // Row selection
+  const toggleRowSelection = (rowId: any) => {
+    const newSelected = new Set(selectedRows);
+    if (newSelected.has(rowId)) {
+      newSelected.delete(rowId);
+    } else {
+      newSelected.add(rowId);
+    }
+    setSelectedRows(newSelected);
+  };
+
+  const toggleAllRows = () => {
+    if (selectedRows.size === paginatedData.length) {
+      setSelectedRows(new Set());
+    } else {
+      setSelectedRows(new Set(paginatedData.map(row => row.id)));
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (onBulkDelete && selectedRows.size > 0) {
+      onBulkDelete(Array.from(selectedRows));
+      setSelectedRows(new Set());
+    }
+  };
+
+  const handleBulkExport = () => {
     const visibleColumns = columns.filter(col => col.visible);
     const headers = visibleColumns.map(col => col.label).join(",");
-    const rows = filteredAndSortedData.map(row => {
+    const dataToExport = selectedRows.size > 0 
+      ? filteredAndSortedData.filter(row => selectedRows.has(row.id))
+      : filteredAndSortedData;
+    
+    const rows = dataToExport.map(row => {
       return visibleColumns.map(col => {
         const value = row[col.id];
         const stringValue = value?.toString() || "";
@@ -259,17 +292,47 @@ export default function DataTable({
     <div className="space-y-3">
       {/* Search and Controls */}
       <div className="flex items-center justify-between gap-2">
-        <div className="relative flex-1 max-w-xs">
-          <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <Input
-            placeholder="Search..."
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              handleFilterOrSearchChange();
-            }}
-            className="pl-8 h-8 text-sm"
-          />
+        <div className="flex items-center gap-2 flex-1">
+          <div className="relative max-w-xs">
+            <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                handleFilterOrSearchChange();
+              }}
+              className="pl-8 h-8 text-sm"
+            />
+          </div>
+          
+          {selectedRows.size > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">
+                {selectedRows.size} selected
+              </span>
+              {onBulkDelete && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="h-8 text-xs"
+                  onClick={handleBulkDelete}
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-1" />
+                  Delete
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs"
+                onClick={handleBulkExport}
+              >
+                <Download className="h-3.5 w-3.5 mr-1" />
+                Export Selected
+              </Button>
+            </div>
+          )}
         </div>
         
         <div className="flex items-center gap-2">
@@ -391,10 +454,12 @@ export default function DataTable({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" onClick={handleExport}>
-            <Download className="h-3.5 w-3.5" />
-            Export
-          </Button>
+          {selectedRows.size === 0 && (
+            <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" onClick={handleBulkExport}>
+              <Download className="h-3.5 w-3.5" />
+              Export
+            </Button>
+          )}
 
           {onImport && (
             <>
@@ -424,6 +489,12 @@ export default function DataTable({
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[50px]">
+                <Checkbox
+                  checked={paginatedData.length > 0 && selectedRows.size === paginatedData.length}
+                  onCheckedChange={toggleAllRows}
+                />
+              </TableHead>
               {actions.length > 0 && (
                 <TableHead className="w-[120px]">Actions</TableHead>
               )}
@@ -450,7 +521,7 @@ export default function DataTable({
             {paginatedData.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={visibleColumns.length + (actions.length > 0 ? 1 : 0)}
+                  colSpan={visibleColumns.length + (actions.length > 0 ? 2 : 1)}
                   className="h-24 text-center"
                 >
                   No results found.
@@ -459,6 +530,12 @@ export default function DataTable({
             ) : (
               paginatedData.map((row, index) => (
                 <TableRow key={row.id || index}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedRows.has(row.id)}
+                      onCheckedChange={() => toggleRowSelection(row.id)}
+                    />
+                  </TableCell>
                   {actions.length > 0 && (
                     <TableCell>
                       <div className="flex gap-2">
