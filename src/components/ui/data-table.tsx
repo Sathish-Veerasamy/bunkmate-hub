@@ -256,11 +256,11 @@ export default function DataTable({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Search and Controls */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <div className="flex items-center justify-between gap-2">
+        <div className="relative flex-1 max-w-xs">
+          <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
             placeholder="Search..."
             value={searchQuery}
@@ -268,22 +268,90 @@ export default function DataTable({
               setSearchQuery(e.target.value);
               handleFilterOrSearchChange();
             }}
-            className="pl-9"
+            className="pl-8 h-8 text-sm"
           />
         </div>
         
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
+          {/* Active Filters Indicator */}
+          {activeFilters.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs">
+                  <Filter className="h-3.5 w-3.5" />
+                  Filters ({activeFilters.length})
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80">
+                <DropdownMenuLabel>Active Filters</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <div className="p-2 space-y-2 max-h-96 overflow-y-auto">
+                  {activeFilters.map(([columnId, filterValue]) => {
+                    const column = getColumnById(columnId);
+                    if (!column) return null;
+
+                    return (
+                      <div key={columnId} className="flex items-center gap-2 p-2 border rounded bg-muted/50">
+                        <span className="text-xs font-medium text-muted-foreground min-w-[80px]">
+                          {column.label}:
+                        </span>
+                        {column.filterType === "select" && column.filterOptions ? (
+                          <Select
+                            value={filterValue || ""}
+                            onValueChange={(value) => handleFilterChange(columnId, value)}
+                          >
+                            <SelectTrigger className="h-7 flex-1 text-xs">
+                              <SelectValue placeholder="Select value" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {column.filterOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Input
+                            placeholder="Enter value..."
+                            value={filterValue || ""}
+                            onChange={(e) => {
+                              handleFilterChange(columnId, e.target.value);
+                              handleFilterOrSearchChange();
+                            }}
+                            className="h-7 flex-1 text-xs"
+                          />
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => {
+                            clearFilter(columnId);
+                            handleFilterOrSearchChange();
+                          }}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
           {/* Add Filter Dropdown */}
           {availableFilterColumns.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Add Filter
+                <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs">
+                  <Plus className="h-3.5 w-3.5" />
+                  Filter
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuLabel>Select Field to Filter</DropdownMenuLabel>
+                <DropdownMenuLabel>Add Filter</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {availableFilterColumns.map((column) => (
                   <DropdownMenuCheckboxItem
@@ -303,8 +371,8 @@ export default function DataTable({
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Settings2 className="h-4 w-4" />
+              <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs">
+                <Settings2 className="h-3.5 w-3.5" />
                 Columns
               </Button>
             </DropdownMenuTrigger>
@@ -323,8 +391,8 @@ export default function DataTable({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button variant="outline" size="sm" className="gap-2" onClick={handleExport}>
-            <Download className="h-4 w-4" />
+          <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" onClick={handleExport}>
+            <Download className="h-3.5 w-3.5" />
             Export
           </Button>
 
@@ -340,78 +408,16 @@ export default function DataTable({
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="gap-2"
+                className="gap-1.5 h-8 text-xs"
                 onClick={() => fileInputRef.current?.click()}
               >
-                <Upload className="h-4 w-4" />
+                <Upload className="h-3.5 w-3.5" />
                 Import
               </Button>
             </>
           )}
         </div>
       </div>
-
-      {/* Active Filters */}
-      {activeFilters.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 text-sm font-medium">
-            <Filter className="h-4 w-4" />
-            <span>Active Filters ({activeFilters.length})</span>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            {activeFilters.map(([columnId, filterValue]) => {
-              const column = getColumnById(columnId);
-              if (!column) return null;
-
-              return (
-                <div key={columnId} className="flex items-center gap-2 p-2 border rounded-lg bg-muted/50">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    {column.label}:
-                  </span>
-                  {column.filterType === "select" && column.filterOptions ? (
-                    <Select
-                      value={filterValue || ""}
-                      onValueChange={(value) => handleFilterChange(columnId, value)}
-                    >
-                      <SelectTrigger className="h-8 w-[160px]">
-                        <SelectValue placeholder="Select value" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {column.filterOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <Input
-                      placeholder="Enter value..."
-                      value={filterValue || ""}
-                      onChange={(e) => {
-                        handleFilterChange(columnId, e.target.value);
-                        handleFilterOrSearchChange();
-                      }}
-                      className="h-8 w-[160px]"
-                    />
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => {
-                      clearFilter(columnId);
-                      handleFilterOrSearchChange();
-                    }}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {/* Table */}
       <div className="rounded-md border">
@@ -489,13 +495,13 @@ export default function DataTable({
       </div>
 
       {/* Pagination Controls */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <div>
-            Showing {totalRecords === 0 ? 0 : startIndex + 1} to {Math.min(endIndex, totalRecords)} of {totalRecords} records
+            Showing {totalRecords === 0 ? 0 : startIndex + 1}-{Math.min(endIndex, totalRecords)} of {totalRecords}
           </div>
-          <div className="flex items-center gap-2">
-            <span>Records per page:</span>
+          <div className="flex items-center gap-1.5">
+            <span>Per page:</span>
             <Select
               value={recordsPerPage.toString()}
               onValueChange={(value) => {
@@ -503,7 +509,7 @@ export default function DataTable({
                 setCurrentPage(1);
               }}
             >
-              <SelectTrigger className="h-8 w-[70px]">
+              <SelectTrigger className="h-7 w-[60px] text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -516,15 +522,16 @@ export default function DataTable({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button
             variant="outline"
             size="sm"
+            className="h-7 px-2 text-xs"
             onClick={() => setCurrentPage(currentPage - 1)}
             disabled={currentPage === 1}
           >
-            <ChevronLeft className="h-4 w-4" />
-            Previous
+            <ChevronLeft className="h-3.5 w-3.5" />
+            Prev
           </Button>
           
           <div className="flex items-center gap-1">
@@ -545,7 +552,7 @@ export default function DataTable({
                   key={pageNumber}
                   variant={currentPage === pageNumber ? "default" : "outline"}
                   size="sm"
-                  className="w-8 h-8 p-0"
+                  className="h-7 w-7 p-0 text-xs"
                   onClick={() => setCurrentPage(pageNumber)}
                 >
                   {pageNumber}
@@ -557,11 +564,12 @@ export default function DataTable({
           <Button
             variant="outline"
             size="sm"
+            className="h-7 px-2 text-xs"
             onClick={() => setCurrentPage(currentPage + 1)}
             disabled={currentPage === totalPages || totalPages === 0}
           >
             Next
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-3.5 w-3.5" />
           </Button>
         </div>
       </div>
