@@ -9,7 +9,13 @@ interface DealersTableProps {
 
 export default function DealersTable({ onEdit }: DealersTableProps) {
   const navigate = useNavigate();
-  const { dealers } = useDealers();
+  const { dealers, deleteDealer } = useDealers();
+
+  const handleBulkDelete = (selectedIds: any[]) => {
+    if (confirm(`Are you sure you want to delete ${selectedIds.length} dealer(s)?`)) {
+      selectedIds.forEach(id => deleteDealer(id));
+    }
+  };
 
   // Get unique values for filters
   const uniqueCompanies = Array.from(new Set(dealers.map(d => d.company)));
@@ -100,6 +106,7 @@ export default function DealersTable({ onEdit }: DealersTableProps) {
       columns={columns}
       actions={actions}
       searchableFields={searchableFields}
+      onBulkDelete={handleBulkDelete}
     />
   );
 }
