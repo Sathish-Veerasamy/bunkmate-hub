@@ -60,6 +60,7 @@ interface DataTableProps {
   onImport?: (data: any[]) => void;
   onBulkDelete?: (selectedIds: any[]) => void;
   exportFileName?: string;
+  customActions?: React.ReactNode;
 }
 
 export default function DataTable({
@@ -71,6 +72,7 @@ export default function DataTable({
   onImport,
   onBulkDelete,
   exportFileName = "export",
+  customActions,
 }: DataTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortColumn, setSortColumn] = useState<string>("");
@@ -293,6 +295,15 @@ export default function DataTable({
       {/* Search and Controls */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 flex-1">
+          {/* Custom Actions */}
+          {customActions && (
+            <div className="flex items-center gap-2">
+              {customActions}
+            </div>
+          )}
+          
+          <div className="flex-1" />
+          
           <div className="relative max-w-xs">
             <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input
