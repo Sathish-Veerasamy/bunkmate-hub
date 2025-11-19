@@ -43,15 +43,7 @@ export default function Dealers() {
   };
 
   return (
-    <div className="space-y-4">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Bunk Dealers</h1>
-        <p className="text-muted-foreground mt-1">
-          Manage petroleum dealer registrations and information
-        </p>
-      </div>
-
+    <div>
       {/* Table Card */}
       <Card className="p-6">
         <DealersTable 
