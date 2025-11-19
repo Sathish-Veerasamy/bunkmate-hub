@@ -94,6 +94,7 @@ export default function Events() {
           statusFilter="all"
           meetingTypeFilter="all"
           onEdit={setEditingEvent}
+          onAddEvent={() => setIsFormOpen(true)}
         />
       </Card>
 

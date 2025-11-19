@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar, MapPin, Users, Plus, Download, Upload } from "lucide-react";
 import { useEvents, Event } from "@/store/events";
 import DataTable, { DataTableColumn, DataTableAction } from "@/components/ui/data-table";
 
@@ -10,6 +11,7 @@ type EventsTableProps = {
   statusFilter: string;
   meetingTypeFilter: string;
   onEdit: (event: Event) => void;
+  onAddEvent: () => void;
 };
 
 export default function EventsTable({
@@ -17,6 +19,7 @@ export default function EventsTable({
   statusFilter,
   meetingTypeFilter,
   onEdit,
+  onAddEvent,
 }: EventsTableProps) {
   const navigate = useNavigate();
   const { events } = useEvents();
@@ -153,12 +156,30 @@ export default function EventsTable({
     "minutesOfMeeting",
   ];
 
+  const customActions = (
+    <>
+      <Button onClick={onAddEvent} size="sm" className="h-9">
+        <Plus className="h-4 w-4 mr-2" />
+        Create Event
+      </Button>
+      <Button variant="outline" size="sm" className="h-9">
+        <Download className="h-4 w-4 mr-2" />
+        Export
+      </Button>
+      <Button variant="outline" size="sm" className="h-9">
+        <Upload className="h-4 w-4 mr-2" />
+        Import
+      </Button>
+    </>
+  );
+
   return (
     <DataTable
       data={filteredData}
       columns={columns}
       actions={actions}
       searchableFields={searchableFields}
+      customActions={customActions}
     />
   );
 }
