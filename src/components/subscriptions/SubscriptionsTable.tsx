@@ -1,13 +1,16 @@
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Plus, Download, Upload } from "lucide-react";
 import { useSubscriptions } from "@/store/subscriptions";
 import DataTable, { DataTableColumn, DataTableAction } from "@/components/ui/data-table";
 
 interface SubscriptionsTableProps {
   dealerId?: number;
+  onAddSubscription?: () => void;
 }
 
-export default function SubscriptionsTable({ dealerId }: SubscriptionsTableProps) {
+export default function SubscriptionsTable({ dealerId, onAddSubscription }: SubscriptionsTableProps) {
   const navigate = useNavigate();
   const { subscriptions } = useSubscriptions();
 
@@ -96,12 +99,30 @@ export default function SubscriptionsTable({ dealerId }: SubscriptionsTableProps
     "status",
   ];
 
+  const customActions = onAddSubscription ? (
+    <>
+      <Button onClick={onAddSubscription} size="sm" className="h-9">
+        <Plus className="h-4 w-4 mr-2" />
+        Add Subscription
+      </Button>
+      <Button variant="outline" size="sm" className="h-9">
+        <Download className="h-4 w-4 mr-2" />
+        Export
+      </Button>
+      <Button variant="outline" size="sm" className="h-9">
+        <Upload className="h-4 w-4 mr-2" />
+        Import
+      </Button>
+    </>
+  ) : undefined;
+
   return (
     <DataTable
       data={filteredSubscriptions}
       columns={columns}
       actions={actions}
       searchableFields={searchableFields}
+      customActions={customActions}
     />
   );
 }
