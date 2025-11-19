@@ -43,7 +43,7 @@ export default function Dealers() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Page Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Bunk Dealers</h1>
@@ -52,34 +52,12 @@ export default function Dealers() {
         </p>
       </div>
 
-      {/* Actions Bar */}
-      <Card className="p-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-end">
-          {/* Action Buttons */}
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={handleAddDealer} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Add Dealer
-            </Button>
-            <Button variant="outline" className="gap-2">
-              <UserX className="h-4 w-4" />
-              Make Inactive
-            </Button>
-            <Button variant="outline" className="gap-2">
-              <Download className="h-4 w-4" />
-              Export
-            </Button>
-            <Button variant="outline" className="gap-2">
-              <Upload className="h-4 w-4" />
-              Import
-            </Button>
-          </div>
-        </div>
-      </Card>
-
       {/* Table Card */}
       <Card className="p-6">
-        <DealersTable onEdit={handleEditDealer} />
+        <DealersTable 
+          onEdit={handleEditDealer}
+          onAddDealer={handleAddDealer}
+        />
       </Card>
 
       {/* Add/Edit Dealer Dialog */}
