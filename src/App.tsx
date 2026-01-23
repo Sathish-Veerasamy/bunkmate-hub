@@ -13,6 +13,8 @@ import Subscriptions from "./pages/Subscriptions";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 
 const queryClient = new QueryClient();
 
@@ -22,20 +24,20 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Layout>
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/dealers" element={<Dealers />} />
-            <Route path="/dealers/:id" element={<DealerDetails />} />
-            <Route path="/events" element={<Events />} />
-            <Route path="/events/:id" element={<EventDetails />} />
-            <Route path="/subscriptions" element={<Subscriptions />} />
-            <Route path="/users" element={<Users />} />
-            <Route path="/settings" element={<Settings />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/" element={<Layout><Index /></Layout>} />
+            <Route path="/dealers" element={<Layout><Dealers /></Layout>} />
+            <Route path="/dealers/:id" element={<Layout><DealerDetails /></Layout>} />
+            <Route path="/events" element={<Layout><Events /></Layout>} />
+            <Route path="/events/:id" element={<Layout><EventDetails /></Layout>} />
+            <Route path="/subscriptions" element={<Layout><Subscriptions /></Layout>} />
+            <Route path="/users" element={<Layout><Users /></Layout>} />
+            <Route path="/settings" element={<Layout><Settings /></Layout>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </Layout>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
