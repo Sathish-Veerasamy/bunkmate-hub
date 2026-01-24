@@ -24,7 +24,12 @@ export const useAuth = create<AuthState>()(
       token: null,
       isAuthenticated: false,
       setAuth: (user, token) => set({ user, token, isAuthenticated: true }),
-      logout: () => set({ user: null, token: null, isAuthenticated: false }),
+      logout: () => {
+        // Clear all auth-related data from storage
+        localStorage.removeItem('auth-storage');
+        sessionStorage.clear();
+        set({ user: null, token: null, isAuthenticated: false });
+      },
     }),
     {
       name: 'auth-storage',

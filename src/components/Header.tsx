@@ -17,18 +17,21 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNavigate } from "react-router-dom";
 import { useNotifications } from "@/store/notifications";
-
-// Mock user - in real app, this would come from auth context
-const currentUser = {
-  name: "Admin User",
-  email: "admin@ddpwa.org",
-  role: "admin",
-};
+import { useAuth } from "@/store/auth";
 
 export default function Header() {
   const navigate = useNavigate();
   const { notifications, getUnreadCount } = useNotifications();
+  const { user, logout } = useAuth();
   const unreadCount = getUnreadCount();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
+  const displayName = user ? `${user.first_name} ${user.last_name}`.trim() || user.email : "Guest";
+  const displayEmail = user?.email || "";
 
   return (
     <div className="border-b bg-card">
@@ -95,9 +98,9 @@ export default function Header() {
                 <User className="h-4 w-4 text-primary" />
               </div>
               <div className="text-left hidden md:block">
-                <p className="text-sm font-medium">{currentUser.name}</p>
-                <p className="text-xs text-muted-foreground capitalize">
-                  {currentUser.role}
+                <p className="text-sm font-medium">{displayName}</p>
+                <p className="text-xs text-muted-foreground">
+                  {displayEmail}
                 </p>
               </div>
             </Button>
@@ -105,9 +108,9 @@ export default function Header() {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>
               <div>
-                <p className="font-medium">{currentUser.name}</p>
+                <p className="font-medium">{displayName}</p>
                 <p className="text-xs text-muted-foreground">
-                  {currentUser.email}
+                  {displayEmail}
                 </p>
               </div>
             </DropdownMenuLabel>
@@ -121,7 +124,7 @@ export default function Header() {
               Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">
+            <DropdownMenuItem className="text-destructive" onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
               Logout
             </DropdownMenuItem>

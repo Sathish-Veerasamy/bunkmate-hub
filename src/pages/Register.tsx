@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useToast } from "@/hooks/use-toast";
-import { authAPI } from "@/lib/api";
+
 
 // Step 1: Initial registration schema
 const initSchema = z.object({
@@ -79,30 +79,19 @@ export default function Register() {
   const handleInit = async (values: InitFormData) => {
     setIsLoading(true);
     try {
-      const response = await authAPI.registerInit({
+      // Dummy API call - replace with actual endpoint later
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      
+      setUserData({
         first_name: values.first_name,
         last_name: values.last_name,
-        email_id: values.email_id,
+        email: values.email_id,
       });
-      
-      if (response.success) {
-        setUserData({
-          first_name: values.first_name,
-          last_name: values.last_name,
-          email: values.email_id,
-        });
-        setStep("otp");
-        toast({
-          title: "OTP Sent",
-          description: "A verification code has been sent to your email.",
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Registration failed",
-          description: response.error || "Failed to initiate registration",
-        });
-      }
+      setStep("otp");
+      toast({
+        title: "OTP Sent",
+        description: "A verification code has been sent to your email.",
+      });
     } catch (error) {
       toast({
         variant: "destructive",
@@ -117,24 +106,14 @@ export default function Register() {
   const handleOtpVerify = async (data: OtpFormData) => {
     setIsLoading(true);
     try {
-      const response = await authAPI.verifyOtp({
-        email: userData.email,
-        otp: data.otp,
-      });
+      // Dummy API call - replace with actual endpoint later
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       
-      if (response.success) {
-        setStep("complete");
-        toast({
-          title: "OTP Verified",
-          description: "Please set your password to complete registration.",
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Verification failed",
-          description: response.error || "Invalid OTP",
-        });
-      }
+      setStep("complete");
+      toast({
+        title: "OTP Verified",
+        description: "Please set your password to complete registration.",
+      });
     } catch (error) {
       toast({
         variant: "destructive",
@@ -149,26 +128,14 @@ export default function Register() {
   const handleComplete = async (data: CompleteFormData) => {
     setIsLoading(true);
     try {
-      const response = await authAPI.registerComplete({
-        email: userData.email,
-        password: data.password,
-        first_name: userData.first_name,
-        last_name: userData.last_name,
-      });
+      // Dummy API call - replace with actual endpoint later
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       
-      if (response.success) {
-        setStep("success");
-        toast({
-          title: "Registration complete",
-          description: "Your account has been created successfully!",
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Registration failed",
-          description: response.error || "Failed to complete registration",
-        });
-      }
+      setStep("success");
+      toast({
+        title: "Registration complete",
+        description: "Your account has been created successfully!",
+      });
     } catch (error) {
       toast({
         variant: "destructive",
@@ -183,24 +150,13 @@ export default function Register() {
   const resendOtp = async () => {
     setIsLoading(true);
     try {
-      const response = await authAPI.registerInit({
-        first_name: userData.first_name,
-        last_name: userData.last_name,
-        email_id: userData.email,
-      });
+      // Dummy API call - replace with actual endpoint later
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       
-      if (response.success) {
-        toast({
-          title: "OTP Resent",
-          description: "A new verification code has been sent to your email.",
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Failed to resend",
-          description: response.error || "Please try again later",
-        });
-      }
+      toast({
+        title: "OTP Resent",
+        description: "A new verification code has been sent to your email.",
+      });
     } catch (error) {
       toast({
         variant: "destructive",
