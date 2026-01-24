@@ -37,33 +37,24 @@ export default function Login() {
   const onSubmit = async (values: LoginFormData) => {
     setIsLoading(true);
     try {
-      const response = await authAPI.login({
-        username: values.username,
-        password: values.password,
-      });
+      // Dummy authentication - replace with actual API call later
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       
-      if (response.success && response.data) {
-        const { token, user } = response.data as { token: string; user: { email: string; first_name: string; last_name: string } };
-        setAuth(
-          {
-            email: user?.email || values.username,
-            first_name: user?.first_name || "",
-            last_name: user?.last_name || "",
-          },
-          token
-        );
-        toast({
-          title: "Login successful",
-          description: "Welcome back!",
-        });
-        navigate("/");
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Login failed",
-          description: response.error || "Invalid credentials",
-        });
-      }
+      // Simulate successful login with dummy token
+      const dummyToken = "dummy_jwt_token_" + Date.now();
+      const dummyUser = {
+        id: "user_001",
+        email: values.username + "@example.com",
+        first_name: "Demo",
+        last_name: "User",
+      };
+      
+      setAuth(dummyUser, dummyToken);
+      toast({
+        title: "Login successful",
+        description: "Welcome back!",
+      });
+      navigate("/");
     } catch (error) {
       toast({
         variant: "destructive",
@@ -141,7 +132,12 @@ export default function Login() {
               </Button>
             </form>
           </Form>
-          <div className="mt-6 text-center text-sm">
+          <div className="mt-4 text-center">
+            <Link to="/forgot-password" className="text-sm text-muted-foreground hover:text-primary">
+              Forgot your password?
+            </Link>
+          </div>
+          <div className="mt-4 text-center text-sm">
             <span className="text-muted-foreground">Don't have an account? </span>
             <Link to="/register" className="text-primary font-medium hover:underline">
               Register here
