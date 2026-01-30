@@ -1,6 +1,7 @@
 // API base URL - in production, this would come from environment
 // For now, we'll use a placeholder that can be configured
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const API_PREFIX = '/api/v3';
 
 interface ApiResponse<T = unknown> {
   success: boolean;
@@ -24,7 +25,7 @@ async function apiRequest<T>(
       ...options.headers,
     };
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const response = await fetch(`${API_BASE_URL}${API_PREFIX}${endpoint}`, {
       ...options,
       headers,
     });
@@ -53,38 +54,45 @@ async function apiRequest<T>(
 
 // Auth API endpoints
 export const authAPI = {
-  registerInit: async (payload: {
-    first_name: string;
-    last_name: string;
+  sendOtp: async (payload: {
+    first_name?: string;
+    last_name?: string;
     email_id: string;
   }) => {
-    return apiRequest('/auth/register-init', {
+    return apiRequest('/auth/send_otp', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
   },
 
-  verifyOtp: async (payload: { email: string; otp: string }) => {
-    return apiRequest('/auth/verify-otp', {
+  verifyOtp: async (payload: { email_id: string; otp: string }) => {
+    return apiRequest('/auth/verify_otp', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
   },
 
-  registerComplete: async (payload: {
-    email: string;
+  register: async (payload: {
+    email_id: string;
     password: string;
     first_name: string;
     last_name: string;
   }) => {
-    return apiRequest('/auth/register-complete', {
+    return apiRequest('/auth/register', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
   },
 
   login: async (payload: { username: string; password: string }) => {
-    return apiRequest<{ token: string; user: unknown }>('/api/login', {
+    return apiRequest<{ token: string; user: unknown }>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  forgotPassword: async (payload: { email_id: string; new_password: string }) => {
+    return apiRequest('/auth/forgot_password', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
