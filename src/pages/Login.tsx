@@ -37,24 +37,59 @@ export default function Login() {
   const onSubmit = async (values: LoginFormData) => {
     setIsLoading(true);
     try {
-      // Dummy authentication - replace with actual API call later
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      // Simulate successful login with dummy token
-      const dummyToken = "dummy_jwt_token_" + Date.now();
-      const dummyUser = {
-        id: "user_001",
-        email: values.username + "@example.com",
-        first_name: "Demo",
-        last_name: "User",
-      };
-      
-      setAuth(dummyUser, dummyToken);
-      toast({
-        title: "Login successful",
-        description: "Welcome back!",
+      const result = await authAPI.login({
+        username: values.username,
+        password: values.password,
       });
-      navigate("/");
+
+      if (result.success && result.data) {
+        const { token, user, message } = result.data as { 
+          token: string; 
+          user: { id: string; email: string; first_name: string; last_name: string }; 
+          message?: string;
+        };
+
+        // Check if organization setup is required
+        if (message === "ORG REQUIRED" || result.error === "ORG REQUIRED") {
+          toast({
+            title: "Organization Required",
+            description: "Please set up your organization to continue.",
+          });
+          // Navigate to org setup with user data
+          navigate("/organization-setup", { 
+            state: { user, token } 
+          });
+          return;
+        }
+
+        setAuth(user, token);
+        toast({
+          title: "Login successful",
+          description: "Welcome back!",
+        });
+        navigate("/");
+      } else {
+        // Check if error indicates org required
+        if (result.error === "ORG REQUIRED" || result.message === "ORG REQUIRED") {
+          toast({
+            title: "Organization Required",
+            description: "Please set up your organization to continue.",
+          });
+          navigate("/organization-setup", { 
+            state: { 
+              user: (result.data as { user?: unknown })?.user, 
+              token: (result.data as { token?: string })?.token 
+            } 
+          });
+          return;
+        }
+
+        toast({
+          variant: "destructive",
+          title: "Login Failed",
+          description: result.error || "Invalid credentials. Please try again.",
+        });
+      }
     } catch (error) {
       toast({
         variant: "destructive",

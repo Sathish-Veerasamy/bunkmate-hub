@@ -162,20 +162,45 @@ export const api = {
 // AUTH API ENDPOINTS
 // ============================================
 export const authAPI = {
-  sendOtp: (payload: { first_name?: string; last_name?: string; email_id: string }) =>
-    api.post('/auth/send_otp', payload),
+  // Step 1: Initialize registration and send OTP
+  registerInit: (payload: { first_name: string; last_name: string; email_id: string }) =>
+    api.post('/auth/register-init', payload),
 
+  // Step 2: Verify OTP
   verifyOtp: (payload: { email_id: string; otp: string }) =>
-    api.post('/auth/verify_otp', payload),
+    api.post('/auth/verify-otp', payload),
 
-  register: (payload: { email_id: string; password: string; first_name: string; last_name: string }) =>
-    api.post('/auth/register', payload),
+  // Step 3: Complete registration with password
+  completeRegister: (payload: { email_id: string; password: string }) =>
+    api.post('/auth/complete-register', payload),
 
+  // Login
   login: (payload: { username: string; password: string }) =>
-    api.post<{ token: string; user: unknown }>('/auth/login', payload),
+    api.post<{ token: string; user: unknown; message?: string }>('/auth/login', payload),
 
+  // Forgot password
   forgotPassword: (payload: { email_id: string; new_password: string }) =>
     api.post('/auth/forgot_password', payload),
+};
+
+// ============================================
+// ORGANIZATION/TENANT API ENDPOINTS
+// ============================================
+export const orgAPI = {
+  // Create organization/tenant
+  createTenant: (payload: { 
+    org_name: string; 
+    org_type?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    pincode?: string;
+  }) => api.post<{ tenant_id: string; message: string }>('/org/create-tenant', payload),
+
+  // Get tenant details
+  getTenant: (tenantId: string) => 
+    api.get<{ tenant: unknown }>(`/org/tenant/${tenantId}`),
 };
 
 // ============================================
