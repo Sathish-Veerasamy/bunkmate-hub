@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useToast } from "@/hooks/use-toast";
-
+import { authAPI } from "@/lib/api";
 
 // Step 1: Initial registration schema
 const initSchema = z.object({
@@ -79,19 +79,30 @@ export default function Register() {
   const handleInit = async (values: InitFormData) => {
     setIsLoading(true);
     try {
-      // Dummy API call - replace with actual endpoint later
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      setUserData({
+      const result = await authAPI.registerInit({
         first_name: values.first_name,
         last_name: values.last_name,
-        email: values.email_id,
+        email_id: values.email_id,
       });
-      setStep("otp");
-      toast({
-        title: "OTP Sent",
-        description: "A verification code has been sent to your email.",
-      });
+
+      if (result.success) {
+        setUserData({
+          first_name: values.first_name,
+          last_name: values.last_name,
+          email: values.email_id,
+        });
+        setStep("otp");
+        toast({
+          title: "OTP Sent",
+          description: "A verification code has been sent to your email.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: result.error || "Failed to send OTP. Please try again.",
+        });
+      }
     } catch (error) {
       toast({
         variant: "destructive",
@@ -106,14 +117,24 @@ export default function Register() {
   const handleOtpVerify = async (data: OtpFormData) => {
     setIsLoading(true);
     try {
-      // Dummy API call - replace with actual endpoint later
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      setStep("complete");
-      toast({
-        title: "OTP Verified",
-        description: "Please set your password to complete registration.",
+      const result = await authAPI.verifyOtp({
+        email_id: userData.email,
+        otp: data.otp,
       });
+
+      if (result.success) {
+        setStep("complete");
+        toast({
+          title: "OTP Verified",
+          description: "Please set your password to complete registration.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: result.error || "Invalid OTP. Please try again.",
+        });
+      }
     } catch (error) {
       toast({
         variant: "destructive",
@@ -128,14 +149,24 @@ export default function Register() {
   const handleComplete = async (data: CompleteFormData) => {
     setIsLoading(true);
     try {
-      // Dummy API call - replace with actual endpoint later
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      setStep("success");
-      toast({
-        title: "Registration complete",
-        description: "Your account has been created successfully!",
+      const result = await authAPI.completeRegister({
+        email_id: userData.email,
+        password: data.password,
       });
+
+      if (result.success) {
+        setStep("success");
+        toast({
+          title: "Registration complete",
+          description: "Your account has been created successfully!",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: result.error || "Registration failed. Please try again.",
+        });
+      }
     } catch (error) {
       toast({
         variant: "destructive",
@@ -150,13 +181,24 @@ export default function Register() {
   const resendOtp = async () => {
     setIsLoading(true);
     try {
-      // Dummy API call - replace with actual endpoint later
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      toast({
-        title: "OTP Resent",
-        description: "A new verification code has been sent to your email.",
+      const result = await authAPI.registerInit({
+        first_name: userData.first_name,
+        last_name: userData.last_name,
+        email_id: userData.email,
       });
+
+      if (result.success) {
+        toast({
+          title: "OTP Resent",
+          description: "A new verification code has been sent to your email.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: result.error || "Failed to resend OTP. Please try again.",
+        });
+      }
     } catch (error) {
       toast({
         variant: "destructive",
