@@ -1,4 +1,8 @@
-import { supabase } from "@/integrations/supabase/client";
+// ============================================
+// API CONFIGURATION - Change these as needed
+// ============================================
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const API_PREFIX = '/api/v3';
 
 // ============================================
 // TYPES
@@ -16,11 +20,11 @@ interface RequestOptions {
 }
 
 // ============================================
-// CORE API REQUEST FUNCTION (via Edge Function Proxy)
+// CORE API REQUEST FUNCTION
 // ============================================
 async function apiRequest<T>(
   endpoint: string,
-  options: { method?: string; body?: unknown; params?: Record<string, string | number | boolean> } = {}
+  options: RequestInit & { params?: Record<string, string | number | boolean> } = {}
 ): Promise<ApiResponse<T>> {
   try {
     // Get token from auth storage
@@ -28,44 +32,40 @@ async function apiRequest<T>(
       ? JSON.parse(localStorage.getItem('auth-storage') || '{}')?.state?.token
       : null;
 
-    // Build endpoint with query params if provided
-    let finalEndpoint = endpoint;
+    // Build headers - automatically includes Content-Type and Authorization
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...options.headers,
+    };
+
+    // Build URL with query params if provided
+    let url = `${API_BASE_URL}${API_PREFIX}${endpoint}`;
     if (options.params) {
       const queryString = new URLSearchParams(
         Object.entries(options.params).map(([key, value]) => [key, String(value)])
       ).toString();
-      finalEndpoint += `?${queryString}`;
+      url += `?${queryString}`;
     }
 
-    // Call the edge function proxy
-    const { data, error } = await supabase.functions.invoke('api-proxy', {
-      body: {
-        endpoint: finalEndpoint,
-        method: options.method || 'GET',
-        body: options.body,
-        token,
-      },
+    const response = await fetch(url, {
+      ...options,
+      headers,
     });
 
-    if (error) {
-      return {
-        success: false,
-        error: error.message || 'Request failed',
-      };
-    }
+    const data = await response.json();
 
-    // Check if the response indicates an error
-    if (data && data.success === false) {
+    if (!response.ok) {
       return {
         success: false,
-        error: data.error || data.message || 'Request failed',
+        error: data.message || data.error || `Request failed with status ${response.status}`,
       };
     }
 
     return {
       success: true,
       data,
-      message: data?.message,
+      message: data.message,
     };
   } catch (error) {
     return {
@@ -101,7 +101,7 @@ async function get<T>(endpoint: string, options?: RequestOptions): Promise<ApiRe
 async function post<T>(endpoint: string, payload?: unknown, options?: RequestOptions): Promise<ApiResponse<T>> {
   return apiRequest<T>(endpoint, {
     method: 'POST',
-    body: payload,
+    body: payload ? JSON.stringify(payload) : undefined,
     ...options,
   });
 }
@@ -114,7 +114,7 @@ async function post<T>(endpoint: string, payload?: unknown, options?: RequestOpt
 async function put<T>(endpoint: string, payload?: unknown, options?: RequestOptions): Promise<ApiResponse<T>> {
   return apiRequest<T>(endpoint, {
     method: 'PUT',
-    body: payload,
+    body: payload ? JSON.stringify(payload) : undefined,
     ...options,
   });
 }
@@ -127,7 +127,7 @@ async function put<T>(endpoint: string, payload?: unknown, options?: RequestOpti
 async function patch<T>(endpoint: string, payload?: unknown, options?: RequestOptions): Promise<ApiResponse<T>> {
   return apiRequest<T>(endpoint, {
     method: 'PATCH',
-    body: payload,
+    body: payload ? JSON.stringify(payload) : undefined,
     ...options,
   });
 }
@@ -141,7 +141,7 @@ async function patch<T>(endpoint: string, payload?: unknown, options?: RequestOp
 async function del<T>(endpoint: string, payload?: unknown, options?: RequestOptions): Promise<ApiResponse<T>> {
   return apiRequest<T>(endpoint, {
     method: 'DELETE',
-    body: payload,
+    body: payload ? JSON.stringify(payload) : undefined,
     ...options,
   });
 }
@@ -271,5 +271,12 @@ if (result.success) {
 const result = await api.get<User[]>('/users', {
   headers: { 'X-Custom-Header': 'value' }
 });
+
+
+// -------- Full URL Construction --------
+// Base URL: import.meta.env.VITE_API_BASE_URL (e.g., https://api.example.com)
+// Prefix: /api/v3
+// Endpoint: /users
+// Final: https://api.example.com/api/v3/users
 
 */
