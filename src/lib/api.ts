@@ -171,7 +171,7 @@ export const authAPI = {
     api.post('/auth/verify-otp', payload),
 
   // Step 3: Complete registration with password
-  completeRegister: (payload: { email_id: string; password: string }) =>
+  completeRegister: (payload: { email_id: string; password: string; first_name: string; last_name: string }) =>
     api.post('/auth/complete-register', payload),
 
   // Login
