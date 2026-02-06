@@ -18,6 +18,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import OrganizationSetup from "./pages/OrganizationSetup";
+import TenantSelection from "./pages/TenantSelection";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/organization-setup" element={<OrganizationSetup />} />
+          <Route path="/tenant-selection" element={<TenantSelection />} />
           
           {/* Protected Routes */}
           <Route path="/" element={<ProtectedRoute><Layout><Index /></Layout></ProtectedRoute>} />

@@ -62,12 +62,14 @@ export default function Login() {
           return;
         }
 
-        setAuth(user, token);
+        // Navigate to tenant selection (will auto-select if only one, or redirect to creation if none)
         toast({
           title: "Login successful",
-          description: "Welcome back!",
+          description: "Please select your organization.",
         });
-        navigate("/");
+        navigate("/tenant-selection", { 
+          state: { user, token } 
+        });
       } else {
         // Check if error indicates org required
         if (result.error === "ORG REQUIRED" || result.message === "ORG REQUIRED") {
