@@ -187,6 +187,14 @@ export const authAPI = {
 // ORGANIZATION/TENANT API ENDPOINTS
 // ============================================
 export const orgAPI = {
+  // Get user's tenants/organizations
+  getUserTenants: () => 
+    api.get<{ tenants: Array<{ id: string; org_name: string; org_type?: string; role?: string }> }>('/org/tenants'),
+
+  // Select/activate a tenant
+  selectTenant: (tenantId: string) => 
+    api.post<{ message: string }>('/org/select-tenant', { tenant_id: tenantId }),
+
   // Create organization/tenant
   createTenant: (payload: { 
     org_name: string; 
