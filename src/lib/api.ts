@@ -55,6 +55,23 @@ async function apiRequest<T>(
 
     const data = await response.json();
 
+    // Handle authentication failures - redirect to login
+    if (response.status === 401 || response.status === 403) {
+      // Clear auth storage
+      localStorage.removeItem('auth-storage');
+      sessionStorage.clear();
+      
+      // Redirect to login (avoid redirect loop if already on login page)
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
+      
+      return {
+        success: false,
+        error: 'Authentication failed. Please login again.',
+      };
+    }
+
     if (!response.ok) {
       return {
         success: false,
