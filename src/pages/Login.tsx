@@ -47,6 +47,10 @@ export default function Login() {
       const user = auth.user;
 
       if (message === "AUTHENTICATED") {
+        setAuth(
+          { email: user.email, first_name: user.firstName, last_name: user.lastName, id: user.id },
+          "authenticated"
+        );
         toast({
           title: "Login successful",
           description: "Welcome back!",
