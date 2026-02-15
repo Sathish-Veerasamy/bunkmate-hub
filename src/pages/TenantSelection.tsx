@@ -4,7 +4,7 @@ import { Building2, Loader2, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { orgAPI } from "@/lib/api";
+import { api, orgAPI } from "@/lib/api";
 import { useAuth } from "@/store/auth";
 
 interface Tenant {
@@ -45,7 +45,7 @@ export default function TenantSelection() {
   const fetchTenants = async () => {
     setIsLoading(true);
     try {
-      const result = await orgAPI.getUserTenants();
+      const result = await api.get<{ tenants: Tenant[] }>('/auth/tenants');
       
       if (result.success && result.data) {
         const tenantList = (result.data as { tenants: Tenant[] }).tenants || [];

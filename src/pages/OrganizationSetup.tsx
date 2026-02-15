@@ -63,9 +63,9 @@ export default function OrganizationSetup() {
   const onSubmit = async (values: OrgFormData) => {
     setIsLoading(true);
     try {
-      const result = await orgAPI.createTenant({
-        org_name: values.org_name,
-        org_type: values.org_type,
+      const result = await orgAPI.createOrg({
+        orgName: values.org_name,
+        orgType: values.org_type,
         address: values.address,
         city: values.city,
         state: values.state,
