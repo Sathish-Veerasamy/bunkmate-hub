@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Building2, Loader2, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,63 +16,46 @@ interface Tenant {
 
 export default function TenantSelection() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { toast } = useToast();
-  const { setAuth, setTenant, user, token } = useAuth();
-  
+  const { setTenant } = useAuth();
+
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSelecting, setIsSelecting] = useState<string | null>(null);
 
-  // Get user and token from location state (passed from login) or from auth store
-  const stateUser = location.state?.user || user;
-  const stateToken = location.state?.token || token;
-
   useEffect(() => {
-    if (!stateUser || !stateToken) {
-      navigate("/login");
-      return;
-    }
-
-    // If coming from login with state, set auth first
-    if (location.state?.user && location.state?.token) {
-      setAuth(location.state.user, location.state.token);
-    }
-
     fetchTenants();
   }, []);
 
   const fetchTenants = async () => {
     setIsLoading(true);
     try {
-      const result = await api.get<{ tenants: Tenant[] }>('/auth/tenants');
-      
+      const result = await api.get<any>('/tenants');
+
       if (result.success && result.data) {
-        const tenantList = (result.data as { tenants: Tenant[] }).tenants || [];
+        // Handle response - data could be array directly or wrapped
+        const tenantList: Tenant[] = Array.isArray(result.data)
+          ? result.data
+          : result.data.tenants || result.data.data || [];
+
         setTenants(tenantList);
 
         // Auto-select if only one tenant
         if (tenantList.length === 1) {
-          await selectTenant(tenantList[0]);
+          await handleSelectTenant(tenantList[0]);
         } else if (tenantList.length === 0) {
-          // No tenants, redirect to creation
           toast({
             title: "No Organization Found",
             description: "Please create an organization to continue.",
           });
-          navigate("/organization-setup", { 
-            state: { user: stateUser, token: stateToken } 
-          });
+          navigate("/organization-setup");
         }
       } else {
-        // Error fetching tenants or no tenants
         toast({
           title: "No Organization Found",
           description: "Please create an organization to continue.",
         });
-        navigate("/organization-setup", { 
-          state: { user: stateUser, token: stateToken } 
-        });
+        navigate("/organization-setup");
       }
     } catch (error) {
       toast({
@@ -85,12 +68,11 @@ export default function TenantSelection() {
     }
   };
 
-  const selectTenant = async (tenant: Tenant) => {
+  const handleSelectTenant = async (tenant: Tenant) => {
     setIsSelecting(tenant.id);
     try {
-      // Call API to set active tenant (if needed)
       const result = await orgAPI.selectTenant(tenant.id);
-      
+
       if (result.success) {
         setTenant(tenant);
         toast({
@@ -129,7 +111,7 @@ export default function TenantSelection() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-lg">
         <CardHeader className="space-y-4 text-center">
           <div className="mx-auto w-16 h-16 rounded-xl bg-gradient-primary flex items-center justify-center">
             <Building2 className="h-8 w-8 text-white" />
@@ -143,42 +125,40 @@ export default function TenantSelection() {
         </CardHeader>
         <CardContent className="space-y-3">
           {tenants.map((tenant) => (
-            <Button
+            <Card
               key={tenant.id}
-              variant="outline"
-              className="w-full justify-between h-auto py-4 px-4"
-              onClick={() => selectTenant(tenant)}
-              disabled={isSelecting !== null}
+              className="cursor-pointer hover:border-primary/50 hover:shadow-md transition-all"
+              onClick={() => handleSelectTenant(tenant)}
             >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Building2 className="h-5 w-5 text-primary" />
+              <CardContent className="flex items-center justify-between p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Building2 className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium">{tenant.org_name}</p>
+                    {tenant.org_type && (
+                      <p className="text-sm text-muted-foreground">{tenant.org_type}</p>
+                    )}
+                    {tenant.role && (
+                      <p className="text-xs text-muted-foreground capitalize">{tenant.role}</p>
+                    )}
+                  </div>
                 </div>
-                <div className="text-left">
-                  <p className="font-medium">{tenant.org_name}</p>
-                  {tenant.org_type && (
-                    <p className="text-sm text-muted-foreground">{tenant.org_type}</p>
-                  )}
-                  {tenant.role && (
-                    <p className="text-xs text-muted-foreground capitalize">{tenant.role}</p>
-                  )}
-                </div>
-              </div>
-              {isSelecting === tenant.id ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              )}
-            </Button>
+                {isSelecting === tenant.id ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                )}
+              </CardContent>
+            </Card>
           ))}
 
           <div className="pt-4 border-t">
             <Button
               variant="ghost"
               className="w-full"
-              onClick={() => navigate("/organization-setup", { 
-                state: { user: stateUser, token: stateToken } 
-              })}
+              onClick={() => navigate("/organization-setup")}
             >
               Create New Organization
             </Button>
