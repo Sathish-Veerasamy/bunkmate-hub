@@ -74,6 +74,12 @@ export default function TenantSelection() {
       const result = await orgAPI.selectTenant(tenant.id);
 
       if (result.success) {
+        // Mark as authenticated in zustand so ProtectedRoute allows access
+        const { setAuth } = useAuth.getState();
+        setAuth(
+          { email: "", first_name: "", last_name: "" },
+          "authenticated"
+        );
         setTenant(tenant);
         toast({
           title: "Organization Selected",
