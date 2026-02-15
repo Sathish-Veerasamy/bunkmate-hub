@@ -55,6 +55,16 @@ export default function Login() {
         return;
       }
 
+      // Tenant selection required
+      if (message === "TENANT_SELECTION_REQUIRED") {
+        toast({
+          title: "Login successful",
+          description: "Please select your organization.",
+        });
+        navigate("/tenant-selection");
+        return;
+      }
+
       // Check if organization setup is required
       if (message === "ORG_REQUIRED" || result.error === "ORG_REQUIRED") {
         navigate("/organization-setup", {
@@ -72,15 +82,6 @@ export default function Login() {
         return;
       }
 
-      // Navigate to tenant selection
-      if (message === "TENANT_SELECTION_REQUIRED") {
-        toast({
-          title: "Login successful",
-          description: "Please select your organization.",
-        });
-        navigate("/tenant-selection");
-        return;
-      }
     } catch (error) {
       toast({
         variant: "destructive",
