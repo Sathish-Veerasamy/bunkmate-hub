@@ -42,55 +42,44 @@ export default function Login() {
         password: values.password,
       });
 
-      if (result.success && result.data) {
-        const { token, user, message } = result.data as { 
-          token: string; 
-          user: { id: string; email: string; first_name: string; last_name: string }; 
-          message?: string;
-        };
+      const auth = (result as any).data;
+      const message = auth.status;
+      const user = auth.user;
 
-        // Check if organization setup is required
-        if (message === "ORG REQUIRED" || result.error === "ORG REQUIRED") {
-          toast({
-            title: "Organization Required",
-            description: "Please set up your organization to continue.",
-          });
-          // Navigate to org setup with user data
-          navigate("/organization-setup", { 
-            state: { user, token } 
-          });
-          return;
-        }
+      if (message === "AUTHENTICATED") {
+        toast({
+          title: "Login successful",
+          description: "Welcome back!",
+        });
+        navigate("/");
+        return;
+      }
 
-        // Navigate to tenant selection (will auto-select if only one, or redirect to creation if none)
+      // Check if organization setup is required
+      if (message === "ORG_REQUIRED" || result.error === "ORG_REQUIRED") {
+        navigate("/organization-setup", {
+          state: {
+            user: {
+              id: user.id,
+              email: user.email,
+              first_name: user.firstName,
+              last_name: user.lastName,
+            },
+            token: "dummy token",
+            message: "logged in",
+          },
+        });
+        return;
+      }
+
+      // Navigate to tenant selection
+      if (message === "TENANT_SELECTION_REQUIRED") {
         toast({
           title: "Login successful",
           description: "Please select your organization.",
         });
-        navigate("/tenant-selection", { 
-          state: { user, token } 
-        });
-      } else {
-        // Check if error indicates org required
-        if (result.error === "ORG REQUIRED" || result.message === "ORG REQUIRED") {
-          toast({
-            title: "Organization Required",
-            description: "Please set up your organization to continue.",
-          });
-          navigate("/organization-setup", { 
-            state: { 
-              user: (result.data as { user?: unknown })?.user, 
-              token: (result.data as { token?: string })?.token 
-            } 
-          });
-          return;
-        }
-
-        toast({
-          variant: "destructive",
-          title: "Login Failed",
-          description: result.error || "Invalid credentials. Please try again.",
-        });
+        navigate("/tenant-selection");
+        return;
       }
     } catch (error) {
       toast({

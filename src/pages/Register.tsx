@@ -152,6 +152,8 @@ export default function Register() {
       const result = await authAPI.completeRegister({
         email_id: values.email_id,
         password: values.password!,
+        first_name: values.first_name,
+        last_name: values.last_name,
       });
 
       if (result.success) {
