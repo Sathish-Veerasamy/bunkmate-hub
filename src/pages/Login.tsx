@@ -28,10 +28,7 @@ export default function Login() {
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      username: "",
-      password: "",
-    },
+    defaultValues: { username: "", password: "" },
   });
 
   const onSubmit = async (values: LoginFormData) => {
@@ -42,50 +39,54 @@ export default function Login() {
         password: values.password,
       });
 
-      const auth = (result as any).data;
-      const message = auth.status;
-      const user = auth.user;
-
-      if (message === "AUTHENTICATED") {
-        setAuth(
-          { email: user.email, first_name: user.firstName, last_name: user.lastName, id: user.id },
-          "authenticated"
-        );
+      if (!result.success) {
         toast({
-          title: "Login successful",
-          description: "Welcome back!",
+          variant: "destructive",
+          title: "Login Failed",
+          description: result.error || "Invalid credentials. Please try again.",
         });
+        return;
+      }
+
+      const data = result.data as any;
+      const status = data?.status;
+      const user = data?.user;
+
+      // ✅ Case 2: Single tenant — fully authenticated
+      if (status === "AUTHENTICATED") {
+        setAuth({
+          id: user?.id,
+          email: user?.email || "",
+          first_name: user?.firstName || user?.first_name || "",
+          last_name: user?.lastName || user?.last_name || "",
+        });
+        toast({ title: "Login successful", description: "Welcome back!" });
         navigate("/");
         return;
       }
 
-      // Tenant selection required
-      if (message === "TENANT_SELECTION_REQUIRED") {
+      // ✅ Case 3: Multiple tenants — pass tenant list via router state
+      if (status === "TENANT_SELECTION_REQUIRED") {
+        const tenants = data?.tenants || [];
         toast({
-          title: "Login successful",
-          description: "Please select your organization.",
+          title: "Select Organization",
+          description: "Please choose an organization to continue.",
         });
-        navigate("/tenant-selection");
+        navigate("/tenant-selection", { state: { tenants, user } });
         return;
       }
 
-      // Check if organization setup is required
-      if (message === "ORG_REQUIRED" || result.error === "ORG_REQUIRED") {
-        navigate("/organization-setup", {
-          state: {
-            user: {
-              id: user.id,
-              email: user.email,
-              first_name: user.firstName,
-              last_name: user.lastName,
-            },
-            token: "dummy token",
-            message: "logged in",
-          },
-        });
+      // ✅ Case 1: No org created yet
+      if (status === "ORG_REQUIRED") {
+        navigate("/organization-setup", { state: { user } });
         return;
       }
 
+      toast({
+        variant: "destructive",
+        title: "Unexpected Response",
+        description: "Unknown login status. Please contact support.",
+      });
     } catch (error) {
       toast({
         variant: "destructive",
@@ -119,7 +120,7 @@ export default function Login() {
                   <FormItem>
                     <FormLabel>Username</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter your username" {...field} />
+                      <Input placeholder="Enter your username or email" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -145,11 +146,7 @@ export default function Login() {
                           className="absolute right-0 top-0 h-full px-3"
                           onClick={() => setShowPassword(!showPassword)}
                         >
-                          {showPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </Button>
                       </div>
                     </FormControl>

@@ -1,89 +1,53 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Building2, Loader2, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { api, orgAPI } from "@/lib/api";
+import { orgAPI } from "@/lib/api";
 import { useAuth } from "@/store/auth";
 
 interface Tenant {
-  id: string;
-  org_name: string;
-  org_type?: string;
-  role?: string;
+  tenantId: string | number;
+  name: string;
 }
 
 export default function TenantSelection() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
-  const { setTenant } = useAuth();
+  const { setAuth, setTenant } = useAuth();
 
-  const [tenants, setTenants] = useState<Tenant[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSelecting, setIsSelecting] = useState<string | null>(null);
+  // Tenants come from login response via router state
+  const tenants: Tenant[] = (location.state as any)?.tenants || [];
+  const user = (location.state as any)?.user;
+
+  const [isSelecting, setIsSelecting] = useState<string | number | null>(null);
 
   useEffect(() => {
-    fetchTenants();
+    if (tenants.length === 0) {
+      // No tenants passed — redirect to org setup
+      navigate("/organization-setup");
+    }
   }, []);
 
-  const fetchTenants = async () => {
-    setIsLoading(true);
-    try {
-      const result = await api.get<any>('/tenants');
-
-      if (result.success && result.data) {
-        // Handle response - data could be array directly or wrapped
-        const tenantList: Tenant[] = Array.isArray(result.data)
-          ? result.data
-          : result.data.tenants || result.data.data || [];
-
-        setTenants(tenantList);
-
-        // Auto-select if only one tenant
-        if (tenantList.length === 1) {
-          await handleSelectTenant(tenantList[0]);
-        } else if (tenantList.length === 0) {
-          toast({
-            title: "No Organization Found",
-            description: "Please create an organization to continue.",
-          });
-          navigate("/organization-setup");
-        }
-      } else {
-        toast({
-          title: "No Organization Found",
-          description: "Please create an organization to continue.",
-        });
-        navigate("/organization-setup");
-      }
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to fetch organizations. Please try again.",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleSelectTenant = async (tenant: Tenant) => {
-    setIsSelecting(tenant.id);
+    setIsSelecting(tenant.tenantId);
     try {
-      const result = await orgAPI.selectTenant(tenant.id);
+      const result = await orgAPI.selectTenant(tenant.tenantId);
 
       if (result.success) {
-        // Mark as authenticated in zustand so ProtectedRoute allows access
-        const { setAuth } = useAuth.getState();
-        setAuth(
-          { email: "", first_name: "", last_name: "" },
-          "authenticated"
-        );
+        // Backend sets cookie; update zustand state for ProtectedRoute
+        setAuth({
+          id: user?.id,
+          email: user?.email || "",
+          first_name: user?.firstName || user?.first_name || "",
+          last_name: user?.lastName || user?.last_name || "",
+        });
         setTenant(tenant);
         toast({
           title: "Organization Selected",
-          description: `You are now working in ${tenant.org_name}`,
+          description: `You are now working in ${tenant.name}`,
         });
         navigate("/");
       } else {
@@ -104,17 +68,6 @@ export default function TenantSelection() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-          <p className="text-muted-foreground">Loading your organizations...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-lg">
@@ -132,26 +85,18 @@ export default function TenantSelection() {
         <CardContent className="space-y-3">
           {tenants.map((tenant) => (
             <Card
-              key={tenant.id}
+              key={tenant.tenantId}
               className="cursor-pointer hover:border-primary/50 hover:shadow-md transition-all"
-              onClick={() => handleSelectTenant(tenant)}
+              onClick={() => !isSelecting && handleSelectTenant(tenant)}
             >
               <CardContent className="flex items-center justify-between p-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Building2 className="h-5 w-5 text-primary" />
                   </div>
-                  <div>
-                    <p className="font-medium">{tenant.org_name}</p>
-                    {tenant.org_type && (
-                      <p className="text-sm text-muted-foreground">{tenant.org_type}</p>
-                    )}
-                    {tenant.role && (
-                      <p className="text-xs text-muted-foreground capitalize">{tenant.role}</p>
-                    )}
-                  </div>
+                  <p className="font-medium">{tenant.name}</p>
                 </div>
-                {isSelecting === tenant.id ? (
+                {isSelecting === tenant.tenantId ? (
                   <Loader2 className="h-4 w-4 animate-spin text-primary" />
                 ) : (
                   <ChevronRight className="h-4 w-4 text-muted-foreground" />
