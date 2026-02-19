@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import DealersTable from "@/components/dealers/DealersTable";
-import DealerForm from "@/components/dealers/DealerForm";
+import DynamicDealerForm from "@/components/dealers/DynamicDealerForm";
 import {
   Dialog,
   DialogContent,
@@ -65,7 +65,7 @@ export default function Dealers() {
                 : "Fill in the dealer information below"}
             </DialogDescription>
           </DialogHeader>
-          <DealerForm
+          <DynamicDealerForm
             dealer={editingDealer}
             onClose={handleCloseForm}
           />
