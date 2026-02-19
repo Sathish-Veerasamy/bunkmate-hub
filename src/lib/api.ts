@@ -1,5 +1,3 @@
-import { getAuthState, clearAuthState, setAuthState } from './authStorage';
-
 // ============================================
 // API CONFIGURATION
 // ============================================
@@ -40,7 +38,7 @@ async function apiRequest<T>(
 
     const response = await fetch(url, {
       ...options,
-      credentials: 'include',
+      credentials: 'include', // Always include cookies
       headers: {
         'Content-Type': 'application/json',
         ...options.headers,
@@ -51,12 +49,9 @@ async function apiRequest<T>(
 
     // 🔐 AUTH FAILURE HANDLING
     if (response.status === 401 || response.status === 403) {
-      clearAuthState();
-
       if (!window.location.pathname.includes('/login')) {
         window.location.href = '/login';
       }
-
       return {
         success: false,
         error: 'Authentication failed. Please login again.',
@@ -66,10 +61,7 @@ async function apiRequest<T>(
     if (!response.ok) {
       return {
         success: false,
-        error:
-          data?.message ||
-          data?.error ||
-          `Request failed (${response.status})`,
+        error: data?.message || data?.error || `Request failed (${response.status})`,
       };
     }
 
@@ -157,42 +149,24 @@ export const authAPI = {
     last_name: string;
   }) => api.post('/auth/complete-register', payload),
 
-  login: async (payload: { username: string; password: string }) => {
-    const res = await api.post<any>('/auth/login', payload);
+  // Login — JWT stored in HTTP-only cookie by backend
+  login: (payload: { username: string; password: string }) =>
+    api.post<any>('/auth/login', payload),
 
-    if (res.success && res.data?.auth) {
-      const auth = res.data.auth;
+  // Clears HTTP-only cookies server-side
+  logout: () => api.post('/auth/logout'),
 
-      setAuthState({
-        token: null,
-        user: auth.user,
-        stage: auth.status,
-      });
-    }
-
-    return res;
-  },
+  // Refresh access token via cookie
+  refresh: () => api.post('/auth/refresh'),
 };
 
 // ============================================
 // ORG / TENANT APIs
 // ============================================
 export const orgAPI = {
-  selectTenant: async (tenantId: string) => {
-    const res = await api.post<any>('/auth/select-tenant', { tenantId });
-
-    if (res.success && res.data?.auth) {
-      const auth = res.data.auth;
-
-      setAuthState({
-        token: null,
-        user: auth.user,
-        stage: 'AUTHENTICATED',
-      });
-    }
-
-    return res;
-  },
+  // Body: { tenantId } — matches backend spec exactly
+  selectTenant: (tenantId: string | number) =>
+    api.post<any>('/auth/select-tenant', { tenantId }),
 
   createOrg: (payload: {
     orgName: string;
@@ -203,4 +177,11 @@ export const orgAPI = {
     country?: string;
     pincode?: string;
   }) => api.post('/auth/org/create', payload),
+};
+
+// ============================================
+// MODULES API
+// ============================================
+export const modulesAPI = {
+  getModules: () => api.get<any[]>('/modules'),
 };

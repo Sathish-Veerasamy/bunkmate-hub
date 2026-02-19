@@ -29,10 +29,11 @@ interface LocationState {
   user?: {
     id: string;
     email: string;
-    first_name: string;
-    last_name: string;
+    first_name?: string;
+    last_name?: string;
+    firstName?: string;
+    lastName?: string;
   };
-  token?: string;
 }
 
 export default function OrganizationSetup() {
@@ -45,7 +46,6 @@ export default function OrganizationSetup() {
   // Get user data passed from login
   const locationState = location.state as LocationState | null;
   const userData = locationState?.user;
-  const tempToken = locationState?.token;
 
   const form = useForm<OrgFormData>({
     resolver: zodResolver(orgSchema),
@@ -74,9 +74,14 @@ export default function OrganizationSetup() {
       });
 
       if (result.success) {
-        // Set auth with user data and token
-        if (userData && tempToken) {
-          setAuth(userData, tempToken);
+        // Org created → backend auto-logs user into new tenant via cookie
+        if (userData) {
+          setAuth({
+            id: userData.id,
+            email: userData.email,
+            first_name: userData.first_name,
+            last_name: userData.last_name,
+          });
         }
 
         toast({
@@ -102,8 +107,8 @@ export default function OrganizationSetup() {
     }
   };
 
-  // Redirect to login if no user data
-  if (!userData && !tempToken) {
+  // No user data — show fallback
+  if (!userData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
