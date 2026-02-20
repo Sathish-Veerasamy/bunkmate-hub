@@ -20,6 +20,7 @@ export interface FieldMeta {
   nullable: boolean;
   partial_field: boolean;
   display_type: string;
+  default?: any;
   constraints?: Record<string, any>;
   relational_mapping?: {
     relationship_type: string;
@@ -28,6 +29,7 @@ export interface FieldMeta {
     referenced_column?: string;
     mapped_by?: string;
     context_filter?: Record<string, string>;
+    on_delete?: string;
     fetch: string;
   };
   display_key?: string;
