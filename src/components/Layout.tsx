@@ -24,8 +24,23 @@ interface Module {
 
 // Fallback static nav if API fails
 const FALLBACK_NAV: Module[] = [
-  { id: 1, name: "Home", icon: "home", route: "/", subModules: [] },
-  { id: 2, name: "Settings", icon: "settings", route: "/settings", subModules: [] },
+  {
+    id: 1,
+    name: "Dealers",
+    icon: "users",
+    route: "/dealers",
+    subModules: [
+      { id: 11, name: "Dealer Details", route: "/dealers/details" },
+      { id: 12, name: "Subscriptions", route: "/dealers/subscriptions" },
+    ],
+  },
+  {
+    id: 2,
+    name: "Donations",
+    icon: "heart",
+    route: "/donations",
+    subModules: [],
+  },
 ];
 
 function getIcon(iconName: string) {
