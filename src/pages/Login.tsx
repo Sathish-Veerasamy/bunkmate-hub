@@ -158,6 +158,23 @@ export default function Login() {
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Sign In
               </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full mt-2"
+                onClick={() => {
+                  setAuth({
+                    id: 0,
+                    email: "test@demo.com",
+                    first_name: "Test",
+                    last_name: "User",
+                  });
+                  toast({ title: "Test Login", description: "Logged in as Test User" });
+                  navigate("/");
+                }}
+              >
+                🧪 Test Login (No API)
+              </Button>
             </form>
           </Form>
           <div className="mt-4 text-center">
