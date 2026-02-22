@@ -2,34 +2,19 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Mail, Phone, MapPin } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin, Plus } from "lucide-react";
+import DataTable, { DataTableColumn, DataTableAction } from "@/components/ui/data-table";
 
-// Hardcoded metadata – same source of truth as DynamicDealerForm
-const DEALER_META_FIELDS = [
-  { name: "tasks", type: "ref_entity", collection: true, standalone: true, display_key: "title", display_type: "Child Table" },
-  { name: "subscriptions", type: "ref_entity", collection: true, standalone: true, display_key: "plan_name", display_type: "Child Table" },
-  { name: "donations", type: "ref_entity", collection: true, standalone: true, display_key: "purpose", display_type: "Child Table" },
-  { name: "meetings", type: "ref_entity", collection: true, standalone: true, display_key: "title", display_type: "Child Table" },
+// Hardcoded metadata – sub-module tabs from collection+standalone fields
+const SUB_MODULE_TABS = [
+  { key: "tasks", label: "Tasks" },
+  { key: "subscriptions", label: "Subscriptions" },
+  { key: "donations", label: "Donations" },
+  { key: "meetings", label: "Meetings" },
 ];
 
-// Derive tabs from fields that are collection=true & standalone=true
-const SUB_MODULE_TABS = DEALER_META_FIELDS
-  .filter((f) => f.collection && f.standalone)
-  .map((f) => ({
-    key: f.name,
-    label: f.name.charAt(0).toUpperCase() + f.name.slice(1),
-  }));
-
-// Sample data
+// Sample dealer data
 const getDealerById = (id: string) => {
   const dealers = [
     {
@@ -67,39 +52,82 @@ const getDealerById = (id: string) => {
   return dealers.find((d) => d.id === parseInt(id));
 };
 
-// Sample sub-module data
-const sampleSubModuleData: Record<string, { columns: string[]; rows: any[][] }> = {
-  tasks: {
-    columns: ["Title", "Status", "Due Date"],
-    rows: [
-      ["Follow up on order", "Pending", "2024-10-15"],
-      ["Site inspection", "Completed", "2024-09-20"],
-    ],
+// ── Sub-module table configs ─────────────────────────────────────
+
+const tasksColumns: DataTableColumn[] = [
+  { id: "title", label: "Title", visible: true },
+  { id: "status", label: "Status", visible: true, filterable: true, filterType: "select", filterOptions: [{ label: "Pending", value: "Pending" }, { label: "Completed", value: "Completed" }, { label: "In Progress", value: "In Progress" }] },
+  { id: "priority", label: "Priority", visible: true, filterable: true, filterType: "select", filterOptions: [{ label: "High", value: "High" }, { label: "Medium", value: "Medium" }, { label: "Low", value: "Low" }] },
+  { id: "assignedTo", label: "Assigned To", visible: true },
+  { id: "dueDate", label: "Due Date", visible: true },
+];
+
+const tasksData = [
+  { id: 1, title: "Follow up on order", status: "Pending", priority: "High", assignedTo: "Admin", dueDate: "2024-10-15" },
+  { id: 2, title: "Site inspection", status: "Completed", priority: "Medium", assignedTo: "Inspector", dueDate: "2024-09-20" },
+  { id: 3, title: "Document verification", status: "In Progress", priority: "High", assignedTo: "Admin", dueDate: "2024-11-01" },
+];
+
+const subscriptionsColumns: DataTableColumn[] = [
+  { id: "planName", label: "Plan", visible: true },
+  { id: "startDate", label: "Start Date", visible: true },
+  { id: "endDate", label: "End Date", visible: true },
+  { id: "amount", label: "Amount", visible: true },
+  { id: "status", label: "Status", visible: true, filterable: true, filterType: "select", filterOptions: [{ label: "Active", value: "Active" }, { label: "Expired", value: "Expired" }],
+    render: (value: string) => (
+      <Badge variant={value === "Active" ? "default" : "secondary"} className={value === "Active" ? "bg-success hover:bg-success/90" : ""}>
+        {value}
+      </Badge>
+    ),
   },
-  subscriptions: {
-    columns: ["Plan", "Start Date", "End Date", "Status"],
-    rows: [
-      ["Premium Plan", "2024-01-01", "2024-12-31", "Active"],
-      ["Basic Plan", "2023-01-01", "2023-12-31", "Expired"],
-    ],
+];
+
+const subscriptionsData = [
+  { id: 1, planName: "Premium Plan", startDate: "2024-01-01", endDate: "2024-12-31", amount: "₹12,000", status: "Active" },
+  { id: 2, planName: "Basic Plan", startDate: "2023-01-01", endDate: "2023-12-31", amount: "₹6,000", status: "Expired" },
+];
+
+const donationsColumns: DataTableColumn[] = [
+  { id: "date", label: "Date", visible: true },
+  { id: "purpose", label: "Purpose", visible: true },
+  { id: "amount", label: "Amount", visible: true },
+  { id: "receiptNo", label: "Receipt No", visible: true },
+];
+
+const donationsData = [
+  { id: 1, date: "2024-08-15", purpose: "Independence Day Event", amount: "₹10,000", receiptNo: "RCP-001" },
+  { id: 2, date: "2024-01-26", purpose: "Republic Day Event", amount: "₹8,000", receiptNo: "RCP-002" },
+  { id: 3, date: "2023-12-25", purpose: "Christmas Charity", amount: "₹5,000", receiptNo: "RCP-003" },
+];
+
+const meetingsColumns: DataTableColumn[] = [
+  { id: "date", label: "Date", visible: true },
+  { id: "title", label: "Meeting Title", visible: true },
+  { id: "venue", label: "Venue", visible: true },
+  { id: "attended", label: "Attendance", visible: true, filterable: true, filterType: "select", filterOptions: [{ label: "Present", value: "true" }, { label: "Absent", value: "false" }],
+    render: (value: boolean) => (
+      <Badge variant={value ? "default" : "secondary"} className={value ? "bg-success hover:bg-success/90" : ""}>
+        {value ? "Present" : "Absent"}
+      </Badge>
+    ),
   },
-  donations: {
-    columns: ["Date", "Purpose", "Amount"],
-    rows: [
-      ["2024-08-15", "Independence Day Event", "₹10,000"],
-      ["2024-01-26", "Republic Day Event", "₹8,000"],
-      ["2023-12-25", "Christmas Charity", "₹5,000"],
-    ],
-  },
-  meetings: {
-    columns: ["Date", "Title", "Attended"],
-    rows: [
-      ["2024-09-15", "Annual General Meeting", "Yes"],
-      ["2024-06-20", "Quarterly Review", "Yes"],
-      ["2024-03-10", "Budget Planning", "No"],
-    ],
-  },
+];
+
+const meetingsData = [
+  { id: 1, date: "2024-09-15", title: "Annual General Meeting", venue: "Main Hall", attended: true },
+  { id: 2, date: "2024-06-20", title: "Quarterly Review", venue: "Conference Room", attended: true },
+  { id: 3, date: "2024-03-10", title: "Budget Planning", venue: "Board Room", attended: false },
+  { id: 4, date: "2024-01-05", title: "New Year Planning", venue: "Main Hall", attended: true },
+];
+
+const SUB_MODULE_CONFIG: Record<string, { columns: DataTableColumn[]; data: any[]; searchFields: string[] }> = {
+  tasks: { columns: tasksColumns, data: tasksData, searchFields: ["title", "status", "assignedTo"] },
+  subscriptions: { columns: subscriptionsColumns, data: subscriptionsData, searchFields: ["planName", "status", "amount"] },
+  donations: { columns: donationsColumns, data: donationsData, searchFields: ["purpose", "amount", "receiptNo"] },
+  meetings: { columns: meetingsColumns, data: meetingsData, searchFields: ["title", "venue"] },
 };
+
+// ── Component ────────────────────────────────────────────────────
 
 export default function DealerDetails() {
   const { id, tab } = useParams();
@@ -117,17 +145,27 @@ export default function DealerDetails() {
         <Card>
           <CardContent className="py-8 text-center">
             <p className="text-muted-foreground">Dealer not found</p>
-            <Button onClick={() => navigate("/dealers")} className="mt-4">
-              Back to Dealers
-            </Button>
+            <Button onClick={() => navigate("/dealers")} className="mt-4">Back to Dealers</Button>
           </CardContent>
         </Card>
       </div>
     );
   }
 
+  const subModuleActions = (tabKey: string): DataTableAction[] => [
+    { icon: "view", label: "View", onClick: (row) => console.log("View", tabKey, row) },
+    { icon: "edit", label: "Edit", onClick: (row) => console.log("Edit", tabKey, row) },
+  ];
+
+  const subModuleCustomActions = (tabKey: string) => (
+    <Button size="sm" className="h-9">
+      <Plus className="h-4 w-4 mr-2" />
+      Add {SUB_MODULE_TABS.find((t) => t.key === tabKey)?.label.replace(/s$/, "")}
+    </Button>
+  );
+
   return (
-    <div className="container py-8 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate("/dealers")}>
@@ -145,14 +183,12 @@ export default function DealerDetails() {
         </Badge>
       </div>
 
-      {/* Tabs: Details (default) + sub-module tabs from metadata */}
+      {/* Tabs */}
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
         <TabsList>
           <TabsTrigger value="details">Details</TabsTrigger>
           {SUB_MODULE_TABS.map((t) => (
-            <TabsTrigger key={t.key} value={t.key}>
-              {t.label}
-            </TabsTrigger>
+            <TabsTrigger key={t.key} value={t.key}>{t.label}</TabsTrigger>
           ))}
         </TabsList>
 
@@ -221,36 +257,20 @@ export default function DealerDetails() {
           </div>
         </TabsContent>
 
-        {/* Dynamic sub-module tabs */}
+        {/* Dynamic sub-module tabs using DataTable */}
         {SUB_MODULE_TABS.map((t) => {
-          const data = sampleSubModuleData[t.key];
-          if (!data) return null;
+          const config = SUB_MODULE_CONFIG[t.key];
+          if (!config) return null;
           return (
             <TabsContent key={t.key} value={t.key}>
-              <Card>
-                <CardHeader><CardTitle>{t.label}</CardTitle></CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        {data.columns.map((col) => (
-                          <TableHead key={col}>{col}</TableHead>
-                        ))}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {data.rows.map((row, idx) => (
-                        <TableRow key={idx}>
-                          {row.map((cell, ci) => (
-                            <TableCell key={ci} className={ci === 0 ? "font-medium" : ""}>
-                              {cell}
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
+              <Card className="p-6">
+                <DataTable
+                  data={config.data}
+                  columns={config.columns}
+                  actions={subModuleActions(t.key)}
+                  searchableFields={config.searchFields}
+                  customActions={subModuleCustomActions(t.key)}
+                />
               </Card>
             </TabsContent>
           );
