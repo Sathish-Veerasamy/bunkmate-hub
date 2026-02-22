@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Mail, Phone, MapPin, Plus } from "lucide-react";
-import DataTable, { DataTableColumn, DataTableAction } from "@/components/ui/data-table";
+import DataTable, { DataTableAction } from "@/components/ui/data-table";
 import DynamicEntityForm from "@/components/common/DynamicEntityForm";
 import {
   Dialog,
@@ -21,6 +21,7 @@ import {
   getMockDealerById,
   getMockSubModuleData,
 } from "@/lib/mock-data";
+import { useMetaColumns } from "@/hooks/use-meta-columns";
 
 // ── Derive sub-module tabs from meta (collection + standalone) ───
 const SUB_MODULE_TABS = DEALER_META.fields
@@ -33,74 +34,46 @@ const SUB_MODULE_TABS = DEALER_META.fields
     mappedBy: f.relational_mapping?.mapped_by,
   }));
 
-// ── Sub-module column definitions ────────────────────────────────
-const SUB_MODULE_COLUMNS: Record<string, { columns: DataTableColumn[]; searchFields: string[] }> = {
-  tasks: {
-    columns: [
-      { id: "title", label: "Title", visible: true },
-      { id: "status", label: "Status", visible: true, filterable: true, filterType: "select", filterOptions: [{ label: "Pending", value: "Pending" }, { label: "Completed", value: "Completed" }, { label: "In Progress", value: "In Progress" }],
-        render: (value: string) => {
-          const colors: Record<string, string> = { Pending: "bg-amber-100 text-amber-800", Completed: "bg-green-100 text-green-800", "In Progress": "bg-blue-100 text-blue-800" };
-          return <Badge variant="secondary" className={colors[value] || ""}>{value}</Badge>;
-        },
-      },
-      { id: "priority", label: "Priority", visible: true, filterable: true, filterType: "select", filterOptions: [{ label: "High", value: "High" }, { label: "Medium", value: "Medium" }, { label: "Low", value: "Low" }],
-        render: (value: string) => {
-          const colors: Record<string, string> = { High: "bg-red-100 text-red-800", Medium: "bg-amber-100 text-amber-800", Low: "bg-green-100 text-green-800" };
-          return <Badge variant="secondary" className={colors[value] || ""}>{value}</Badge>;
-        },
-      },
-      { id: "assignedTo", label: "Assigned To", visible: true },
-      { id: "dueDate", label: "Due Date", visible: true },
-      { id: "createdAt", label: "Created", visible: true },
-    ],
-    searchFields: ["title", "status", "assignedTo", "priority"],
-  },
-  subscriptions: {
-    columns: [
-      { id: "planName", label: "Plan", visible: true },
-      { id: "startDate", label: "Start Date", visible: true },
-      { id: "endDate", label: "End Date", visible: true },
-      { id: "amount", label: "Amount", visible: true },
-      { id: "billingCycle", label: "Billing Cycle", visible: true },
-      { id: "status", label: "Status", visible: true, filterable: true, filterType: "select", filterOptions: [{ label: "Active", value: "Active" }, { label: "Expired", value: "Expired" }],
-        render: (value: string) => (
-          <Badge variant={value === "Active" ? "default" : "secondary"} className={value === "Active" ? "bg-green-100 text-green-800" : "bg-muted text-muted-foreground"}>
-            {value}
-          </Badge>
-        ),
-      },
-    ],
-    searchFields: ["planName", "status", "amount", "billingCycle"],
-  },
-  donations: {
-    columns: [
-      { id: "date", label: "Date", visible: true },
-      { id: "purpose", label: "Purpose", visible: true },
-      { id: "amount", label: "Amount", visible: true },
-      { id: "mode", label: "Mode", visible: true, filterable: true, filterType: "select", filterOptions: [{ label: "Cash", value: "Cash" }, { label: "Cheque", value: "Cheque" }, { label: "UPI", value: "UPI" }] },
-      { id: "receiptNo", label: "Receipt No", visible: true },
-    ],
-    searchFields: ["purpose", "amount", "receiptNo", "mode"],
-  },
-  meetings: {
-    columns: [
-      { id: "date", label: "Date", visible: true },
-      { id: "title", label: "Meeting Title", visible: true },
-      { id: "venue", label: "Venue", visible: true },
-      { id: "duration", label: "Duration", visible: true },
-      { id: "attended", label: "Attendance", visible: true, filterable: true, filterType: "select", filterOptions: [{ label: "Present", value: "true" }, { label: "Absent", value: "false" }],
-        render: (value: boolean) => (
-          <Badge variant={value ? "default" : "secondary"} className={value ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
-            {value ? "Present" : "Absent"}
-          </Badge>
-        ),
-      },
-      { id: "notes", label: "Notes", visible: true },
-    ],
-    searchFields: ["title", "venue", "notes"],
-  },
-};
+// ── Sub-module columns hook wrapper ──────────────────────────────
+function SubModuleTab({
+  tabKey,
+  refEntity,
+  data,
+  onAdd,
+  onEdit,
+}: {
+  tabKey: string;
+  refEntity: string;
+  data: any[];
+  onAdd: () => void;
+  onEdit: (row: any) => void;
+}) {
+  const { columns, searchFields } = useMetaColumns(refEntity);
+
+  const actions: DataTableAction[] = [
+    { icon: "view", label: "View", onClick: (row) => console.log("View", tabKey, row) },
+    { icon: "edit", label: "Edit", onClick: (row) => onEdit(row) },
+  ];
+
+  const label = SUB_MODULE_TABS.find((t) => t.key === tabKey)?.label.replace(/s$/, "") || refEntity;
+
+  const customActions = (
+    <Button size="sm" className="h-8 text-xs" onClick={onAdd}>
+      <Plus className="h-3.5 w-3.5 mr-1.5" />
+      Add {label}
+    </Button>
+  );
+
+  return (
+    <DataTable
+      data={data}
+      columns={columns}
+      actions={actions}
+      searchableFields={searchFields}
+      customActions={customActions}
+    />
+  );
+}
 
 export default function DealerDetails() {
   const { id, tab } = useParams();
@@ -194,18 +167,6 @@ export default function DealerDetails() {
       </div>
     );
   }
-
-  const subModuleActions = (tabKey: string): DataTableAction[] => [
-    { icon: "view", label: "View", onClick: (row) => console.log("View", tabKey, row) },
-    { icon: "edit", label: "Edit", onClick: (row) => openEditForm(tabKey, row) },
-  ];
-
-  const subModuleCustomActions = (tabKey: string) => (
-    <Button size="sm" className="h-8 text-xs" onClick={() => openAddForm(tabKey)}>
-      <Plus className="h-3.5 w-3.5 mr-1.5" />
-      Add {SUB_MODULE_TABS.find((t) => t.key === tabKey)?.label.replace(/s$/, "")}
-    </Button>
-  );
 
   return (
     <div className="space-y-6">
@@ -310,17 +271,16 @@ export default function DealerDetails() {
 
         {/* Dynamic sub-module tabs */}
         {SUB_MODULE_TABS.map((t) => {
-          const config = SUB_MODULE_COLUMNS[t.key];
-          if (!config) return null;
+          if (!t.refEntity) return null;
           const data = subModuleData[t.key] ?? [];
           return (
             <TabsContent key={t.key} value={t.key} className="mt-0">
-              <DataTable
+              <SubModuleTab
+                tabKey={t.key}
+                refEntity={t.refEntity}
                 data={data}
-                columns={config.columns}
-                actions={subModuleActions(t.key)}
-                searchableFields={config.searchFields}
-                customActions={subModuleCustomActions(t.key)}
+                onAdd={() => openAddForm(t.key)}
+                onEdit={(row) => openEditForm(t.key, row)}
               />
             </TabsContent>
           );

@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Plus } from "lucide-react";
-import DataTable, { DataTableColumn, DataTableAction } from "@/components/ui/data-table";
+import DataTable, { DataTableAction } from "@/components/ui/data-table";
 import DynamicEntityForm from "@/components/common/DynamicEntityForm";
 import {
   Dialog,
@@ -14,12 +13,15 @@ import {
 } from "@/components/ui/dialog";
 import { USE_MOCK, getMockEntityList } from "@/lib/mock-data";
 import { api } from "@/lib/api";
+import { useMetaColumns } from "@/hooks/use-meta-columns";
 
 export default function Tasks() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<any>(null);
+
+  const { columns, searchFields } = useMetaColumns("task");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -36,45 +38,6 @@ export default function Tasks() {
     };
     fetchData();
   }, []);
-
-  const columns: DataTableColumn[] = [
-    { id: "title", label: "Title", visible: true },
-    {
-      id: "status", label: "Status", visible: true, filterable: true, filterType: "select",
-      filterOptions: [
-        { label: "Pending", value: "Pending" },
-        { label: "In Progress", value: "In Progress" },
-        { label: "Completed", value: "Completed" },
-      ],
-      render: (value: string) => {
-        const colors: Record<string, string> = {
-          Pending: "bg-amber-100 text-amber-800",
-          Completed: "bg-green-100 text-green-800",
-          "In Progress": "bg-blue-100 text-blue-800",
-        };
-        return <Badge variant="secondary" className={colors[value] || ""}>{value}</Badge>;
-      },
-    },
-    {
-      id: "priority", label: "Priority", visible: true, filterable: true, filterType: "select",
-      filterOptions: [
-        { label: "High", value: "High" },
-        { label: "Medium", value: "Medium" },
-        { label: "Low", value: "Low" },
-      ],
-      render: (value: string) => {
-        const colors: Record<string, string> = {
-          High: "bg-red-100 text-red-800",
-          Medium: "bg-amber-100 text-amber-800",
-          Low: "bg-green-100 text-green-800",
-        };
-        return <Badge variant="secondary" className={colors[value] || ""}>{value}</Badge>;
-      },
-    },
-    { id: "assignedTo", label: "Assigned To", visible: true },
-    { id: "dueDate", label: "Due Date", visible: true },
-    { id: "createdAt", label: "Created", visible: true },
-  ];
 
   const actions: DataTableAction[] = [
     { icon: "view", label: "View", onClick: (row) => console.log("View", row) },
@@ -94,7 +57,7 @@ export default function Tasks() {
           data={tasks}
           columns={columns}
           actions={actions}
-          searchableFields={["title", "status", "assignedTo", "priority"]}
+          searchableFields={searchFields}
           customActions={customActions}
         />
       </Card>
