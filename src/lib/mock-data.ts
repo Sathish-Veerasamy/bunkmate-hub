@@ -6,7 +6,7 @@
 export const USE_MOCK = true;
 
 // ============================================
-// DEALER METAINFO
+// ENTITY METAINFO TYPES
 // ============================================
 export interface EntityMeta {
   entity: string;
@@ -15,6 +15,9 @@ export interface EntityMeta {
   fields: import("@/components/dealers/MetaFormField").FieldMeta[];
 }
 
+// ============================================
+// DEALER METAINFO
+// ============================================
 export const DEALER_META: EntityMeta = {
   entity: "dealer",
   table_name: "dealers",
@@ -42,6 +45,91 @@ export const DEALER_META: EntityMeta = {
 };
 
 // ============================================
+// TASK METAINFO
+// ============================================
+export const TASK_META: EntityMeta = {
+  entity: "task",
+  table_name: "tasks",
+  primary_key: "id",
+  fields: [
+    { name: "title", type: "string", nullable: false, partial_field: true, display_type: "Single Line", constraints: { max_len: 300, min_len: 2 } },
+    { name: "description", type: "multi_line", nullable: true, partial_field: true, display_type: "Multi Line" },
+    { name: "status", type: "enum", nullable: false, partial_field: true, display_type: "Dropdown", constraints: { values: ["Pending", "In Progress", "Completed", "Cancelled"] } },
+    { name: "priority", type: "enum", nullable: false, partial_field: true, display_type: "Dropdown", constraints: { values: ["High", "Medium", "Low"] } },
+    { name: "assignedTo", type: "string", nullable: true, partial_field: true, display_type: "Single Line" },
+    { name: "dueDate", type: "date", nullable: true, partial_field: true, display_type: "Date Picker" },
+    { name: "createdAt", type: "date", nullable: true, partial_field: false, display_type: "Date Picker" },
+    { name: "notes", type: "multi_line", nullable: true, partial_field: false, display_type: "Multi Line" },
+  ],
+};
+
+// ============================================
+// DONATION METAINFO
+// ============================================
+export const DONATION_META: EntityMeta = {
+  entity: "donation",
+  table_name: "donations",
+  primary_key: "id",
+  fields: [
+    { name: "date", type: "date", nullable: false, partial_field: true, display_type: "Date Picker" },
+    { name: "purpose", type: "string", nullable: false, partial_field: true, display_type: "Single Line", constraints: { max_len: 300 } },
+    { name: "amount", type: "string", nullable: false, partial_field: true, display_type: "Single Line" },
+    { name: "mode", type: "enum", nullable: false, partial_field: true, display_type: "Dropdown", constraints: { values: ["Cash", "Cheque", "UPI", "Bank Transfer"] } },
+    { name: "receiptNo", type: "string", nullable: true, partial_field: true, display_type: "Single Line" },
+    { name: "notes", type: "multi_line", nullable: true, partial_field: false, display_type: "Multi Line" },
+  ],
+};
+
+// ============================================
+// SUBSCRIPTION METAINFO
+// ============================================
+export const SUBSCRIPTION_META: EntityMeta = {
+  entity: "subscription",
+  table_name: "subscriptions",
+  primary_key: "id",
+  fields: [
+    { name: "planName", type: "string", nullable: false, partial_field: true, display_type: "Single Line" },
+    { name: "startDate", type: "date", nullable: false, partial_field: true, display_type: "Date Picker" },
+    { name: "endDate", type: "date", nullable: false, partial_field: true, display_type: "Date Picker" },
+    { name: "amount", type: "string", nullable: false, partial_field: true, display_type: "Single Line" },
+    { name: "billingCycle", type: "enum", nullable: false, partial_field: true, display_type: "Dropdown", constraints: { values: ["Monthly", "Quarterly", "Half-Yearly", "Yearly"] } },
+    { name: "status", type: "enum", nullable: false, partial_field: true, display_type: "Dropdown", constraints: { values: ["Active", "Expired", "Cancelled"] } },
+  ],
+};
+
+// ============================================
+// MEETING METAINFO
+// ============================================
+export const MEETING_META: EntityMeta = {
+  entity: "meeting",
+  table_name: "meetings",
+  primary_key: "id",
+  fields: [
+    { name: "title", type: "string", nullable: false, partial_field: true, display_type: "Single Line" },
+    { name: "date", type: "date", nullable: false, partial_field: true, display_type: "Date Picker" },
+    { name: "venue", type: "string", nullable: true, partial_field: true, display_type: "Single Line" },
+    { name: "duration", type: "string", nullable: true, partial_field: true, display_type: "Single Line" },
+    { name: "attended", type: "boolean", nullable: false, partial_field: true, display_type: "Checkbox", default: false },
+    { name: "notes", type: "multi_line", nullable: true, partial_field: false, display_type: "Multi Line" },
+  ],
+};
+
+// ============================================
+// ENTITY META REGISTRY
+// ============================================
+const ENTITY_META_MAP: Record<string, EntityMeta> = {
+  dealer: DEALER_META,
+  task: TASK_META,
+  donation: DONATION_META,
+  subscription: SUBSCRIPTION_META,
+  meeting: MEETING_META,
+};
+
+export function getEntityMeta(entityName: string): EntityMeta | null {
+  return ENTITY_META_MAP[entityName] ?? null;
+}
+
+// ============================================
 // REF ENTITY OPTIONS
 // ============================================
 export const MOCK_STATUSES = [
@@ -49,6 +137,14 @@ export const MOCK_STATUSES = [
   { id: 2, name: "Inactive", code: "INACTIVE", color: "#ef4444" },
   { id: 3, name: "Pending", code: "PENDING", color: "#f59e0b" },
 ];
+
+const REF_ENTITY_OPTIONS: Record<string, any[]> = {
+  status: MOCK_STATUSES,
+};
+
+export function getRefEntityOptions(refEntity: string): any[] {
+  return REF_ENTITY_OPTIONS[refEntity] ?? [];
+}
 
 // ============================================
 // DEALER LIST DATA
@@ -123,40 +219,53 @@ export const MOCK_DEALERS = [
 ];
 
 // ============================================
-// SUB-MODULE: TASKS
+// STANDALONE MOCK DATA: TASKS (flat list)
 // ============================================
-export const MOCK_TASKS: Record<number, any[]> = {
-  1: [
-    { id: 1, title: "Follow up on bulk order", status: "Pending", priority: "High", assignedTo: "Admin", dueDate: "2024-10-15", createdAt: "2024-09-01" },
-    { id: 2, title: "Site inspection for safety audit", status: "Completed", priority: "Medium", assignedTo: "Inspector", dueDate: "2024-09-20", createdAt: "2024-08-15" },
-    { id: 3, title: "Document verification", status: "In Progress", priority: "High", assignedTo: "Admin", dueDate: "2024-11-01", createdAt: "2024-09-10" },
-    { id: 4, title: "Renew trade license", status: "Pending", priority: "Low", assignedTo: "Legal", dueDate: "2024-12-31", createdAt: "2024-10-01" },
-    { id: 5, title: "Update contact details", status: "Completed", priority: "Low", assignedTo: "Admin", dueDate: "2024-08-30", createdAt: "2024-08-20" },
-  ],
-  2: [
-    { id: 6, title: "Partnership agreement review", status: "In Progress", priority: "High", assignedTo: "Legal", dueDate: "2024-10-30", createdAt: "2024-09-15" },
-    { id: 7, title: "Quarterly performance review", status: "Pending", priority: "Medium", assignedTo: "Manager", dueDate: "2024-11-15", createdAt: "2024-10-01" },
-    { id: 8, title: "Equipment maintenance check", status: "Completed", priority: "Medium", assignedTo: "Technician", dueDate: "2024-09-25", createdAt: "2024-09-05" },
-  ],
-  3: [
-    { id: 9, title: "Reactivation assessment", status: "Pending", priority: "High", assignedTo: "Manager", dueDate: "2024-11-30", createdAt: "2024-10-05" },
-    { id: 10, title: "Overdue payment collection", status: "In Progress", priority: "High", assignedTo: "Finance", dueDate: "2024-10-20", createdAt: "2024-09-20" },
-  ],
-  4: [
-    { id: 11, title: "Annual compliance filing", status: "Pending", priority: "High", assignedTo: "Legal", dueDate: "2024-12-15", createdAt: "2024-10-01" },
-    { id: 12, title: "Loyalty program enrollment", status: "Completed", priority: "Low", assignedTo: "Marketing", dueDate: "2024-09-15", createdAt: "2024-08-01" },
-    { id: 13, title: "Tank calibration", status: "In Progress", priority: "Medium", assignedTo: "Technician", dueDate: "2024-11-01", createdAt: "2024-09-25" },
-    { id: 14, title: "Staff training session", status: "Pending", priority: "Medium", assignedTo: "HR", dueDate: "2024-11-20", createdAt: "2024-10-05" },
-  ],
-  5: [
-    { id: 15, title: "Initial setup verification", status: "In Progress", priority: "High", assignedTo: "Admin", dueDate: "2024-10-25", createdAt: "2024-10-01" },
-    { id: 16, title: "Branding materials delivery", status: "Pending", priority: "Low", assignedTo: "Marketing", dueDate: "2024-11-10", createdAt: "2024-10-05" },
-  ],
-};
+export const MOCK_ALL_TASKS = [
+  { id: 1, title: "Follow up on bulk order", status: "Pending", priority: "High", assignedTo: "Admin", dueDate: "2024-10-15", createdAt: "2024-09-01", context_id: 1, context_type: "dealer" },
+  { id: 2, title: "Site inspection for safety audit", status: "Completed", priority: "Medium", assignedTo: "Inspector", dueDate: "2024-09-20", createdAt: "2024-08-15", context_id: 1, context_type: "dealer" },
+  { id: 3, title: "Document verification", status: "In Progress", priority: "High", assignedTo: "Admin", dueDate: "2024-11-01", createdAt: "2024-09-10", context_id: 1, context_type: "dealer" },
+  { id: 4, title: "Renew trade license", status: "Pending", priority: "Low", assignedTo: "Legal", dueDate: "2024-12-31", createdAt: "2024-10-01", context_id: 1, context_type: "dealer" },
+  { id: 5, title: "Update contact details", status: "Completed", priority: "Low", assignedTo: "Admin", dueDate: "2024-08-30", createdAt: "2024-08-20", context_id: 1, context_type: "dealer" },
+  { id: 6, title: "Partnership agreement review", status: "In Progress", priority: "High", assignedTo: "Legal", dueDate: "2024-10-30", createdAt: "2024-09-15", context_id: 2, context_type: "dealer" },
+  { id: 7, title: "Quarterly performance review", status: "Pending", priority: "Medium", assignedTo: "Manager", dueDate: "2024-11-15", createdAt: "2024-10-01", context_id: 2, context_type: "dealer" },
+  { id: 8, title: "Equipment maintenance check", status: "Completed", priority: "Medium", assignedTo: "Technician", dueDate: "2024-09-25", createdAt: "2024-09-05", context_id: 2, context_type: "dealer" },
+  { id: 9, title: "Reactivation assessment", status: "Pending", priority: "High", assignedTo: "Manager", dueDate: "2024-11-30", createdAt: "2024-10-05", context_id: 3, context_type: "dealer" },
+  { id: 10, title: "Overdue payment collection", status: "In Progress", priority: "High", assignedTo: "Finance", dueDate: "2024-10-20", createdAt: "2024-09-20", context_id: 3, context_type: "dealer" },
+  { id: 11, title: "Annual compliance filing", status: "Pending", priority: "High", assignedTo: "Legal", dueDate: "2024-12-15", createdAt: "2024-10-01", context_id: 4, context_type: "dealer" },
+  { id: 12, title: "Loyalty program enrollment", status: "Completed", priority: "Low", assignedTo: "Marketing", dueDate: "2024-09-15", createdAt: "2024-08-01", context_id: 4, context_type: "dealer" },
+  { id: 13, title: "Tank calibration", status: "In Progress", priority: "Medium", assignedTo: "Technician", dueDate: "2024-11-01", createdAt: "2024-09-25", context_id: 4, context_type: "dealer" },
+  { id: 14, title: "Staff training session", status: "Pending", priority: "Medium", assignedTo: "HR", dueDate: "2024-11-20", createdAt: "2024-10-05", context_id: 4, context_type: "dealer" },
+  { id: 15, title: "Initial setup verification", status: "In Progress", priority: "High", assignedTo: "Admin", dueDate: "2024-10-25", createdAt: "2024-10-01", context_id: 5, context_type: "dealer" },
+  { id: 16, title: "Branding materials delivery", status: "Pending", priority: "Low", assignedTo: "Marketing", dueDate: "2024-11-10", createdAt: "2024-10-05", context_id: 5, context_type: "dealer" },
+  { id: 17, title: "Prepare annual budget report", status: "Pending", priority: "High", assignedTo: "Finance", dueDate: "2024-12-01", createdAt: "2024-10-10", context_id: null, context_type: null },
+  { id: 18, title: "Update CRM database", status: "In Progress", priority: "Medium", assignedTo: "Admin", dueDate: "2024-10-30", createdAt: "2024-10-08", context_id: null, context_type: null },
+  { id: 19, title: "Vendor onboarding process", status: "Completed", priority: "Low", assignedTo: "Procurement", dueDate: "2024-09-30", createdAt: "2024-09-01", context_id: null, context_type: null },
+  { id: 20, title: "IT infrastructure audit", status: "Pending", priority: "High", assignedTo: "IT", dueDate: "2024-11-15", createdAt: "2024-10-12", context_id: null, context_type: null },
+];
 
 // ============================================
-// SUB-MODULE: SUBSCRIPTIONS
+// STANDALONE MOCK DATA: DONATIONS (flat list)
 // ============================================
+export const MOCK_ALL_DONATIONS = [
+  { id: 1, date: "2024-08-15", purpose: "Independence Day Event", amount: "₹10,000", receiptNo: "RCP-001", mode: "UPI", dealer_id: 1 },
+  { id: 2, date: "2024-01-26", purpose: "Republic Day Event", amount: "₹8,000", receiptNo: "RCP-002", mode: "Cheque", dealer_id: 1 },
+  { id: 3, date: "2023-12-25", purpose: "Christmas Charity", amount: "₹5,000", receiptNo: "RCP-003", mode: "Cash", dealer_id: 1 },
+  { id: 4, date: "2024-04-14", purpose: "Tamil New Year Celebration", amount: "₹7,500", receiptNo: "RCP-010", mode: "UPI", dealer_id: 1 },
+  { id: 5, date: "2024-08-15", purpose: "Independence Day Event", amount: "₹5,000", receiptNo: "RCP-004", mode: "UPI", dealer_id: 2 },
+  { id: 6, date: "2024-03-08", purpose: "Women's Day Program", amount: "₹3,000", receiptNo: "RCP-005", mode: "Cash", dealer_id: 2 },
+  { id: 7, date: "2024-08-15", purpose: "Independence Day Event", amount: "₹15,000", receiptNo: "RCP-006", mode: "Cheque", dealer_id: 4 },
+  { id: 8, date: "2024-06-05", purpose: "Environment Day Drive", amount: "₹10,000", receiptNo: "RCP-007", mode: "UPI", dealer_id: 4 },
+  { id: 9, date: "2024-01-26", purpose: "Republic Day Event", amount: "₹12,000", receiptNo: "RCP-008", mode: "Cheque", dealer_id: 4 },
+  { id: 10, date: "2023-11-14", purpose: "Children's Day Program", amount: "₹6,000", receiptNo: "RCP-009", mode: "Cash", dealer_id: 4 },
+  { id: 11, date: "2024-09-05", purpose: "Teachers' Day Celebration", amount: "₹4,000", receiptNo: "RCP-011", mode: "UPI", dealer_id: 4 },
+  { id: 12, date: "2024-08-15", purpose: "Independence Day Event", amount: "₹2,000", receiptNo: "RCP-012", mode: "Cash", dealer_id: 5 },
+];
+
+// ============================================
+// SUB-MODULE KEYED DATA (by dealer)
+// ============================================
+export const MOCK_TASKS: Record<number, any[]> = {};
 export const MOCK_SUBSCRIPTIONS: Record<number, any[]> = {
   1: [
     { id: 1, planName: "Premium Plan", startDate: "2024-01-01", endDate: "2024-12-31", amount: "₹12,000", status: "Active", billingCycle: "Yearly" },
@@ -180,36 +289,7 @@ export const MOCK_SUBSCRIPTIONS: Record<number, any[]> = {
   ],
 };
 
-// ============================================
-// SUB-MODULE: DONATIONS
-// ============================================
-export const MOCK_DONATIONS: Record<number, any[]> = {
-  1: [
-    { id: 1, date: "2024-08-15", purpose: "Independence Day Event", amount: "₹10,000", receiptNo: "RCP-001", mode: "UPI" },
-    { id: 2, date: "2024-01-26", purpose: "Republic Day Event", amount: "₹8,000", receiptNo: "RCP-002", mode: "Cheque" },
-    { id: 3, date: "2023-12-25", purpose: "Christmas Charity", amount: "₹5,000", receiptNo: "RCP-003", mode: "Cash" },
-    { id: 4, date: "2024-04-14", purpose: "Tamil New Year Celebration", amount: "₹7,500", receiptNo: "RCP-010", mode: "UPI" },
-  ],
-  2: [
-    { id: 5, date: "2024-08-15", purpose: "Independence Day Event", amount: "₹5,000", receiptNo: "RCP-004", mode: "UPI" },
-    { id: 6, date: "2024-03-08", purpose: "Women's Day Program", amount: "₹3,000", receiptNo: "RCP-005", mode: "Cash" },
-  ],
-  3: [],
-  4: [
-    { id: 7, date: "2024-08-15", purpose: "Independence Day Event", amount: "₹15,000", receiptNo: "RCP-006", mode: "Cheque" },
-    { id: 8, date: "2024-06-05", purpose: "Environment Day Drive", amount: "₹10,000", receiptNo: "RCP-007", mode: "UPI" },
-    { id: 9, date: "2024-01-26", purpose: "Republic Day Event", amount: "₹12,000", receiptNo: "RCP-008", mode: "Cheque" },
-    { id: 10, date: "2023-11-14", purpose: "Children's Day Program", amount: "₹6,000", receiptNo: "RCP-009", mode: "Cash" },
-    { id: 11, date: "2024-09-05", purpose: "Teachers' Day Celebration", amount: "₹4,000", receiptNo: "RCP-011", mode: "UPI" },
-  ],
-  5: [
-    { id: 12, date: "2024-08-15", purpose: "Independence Day Event", amount: "₹2,000", receiptNo: "RCP-012", mode: "Cash" },
-  ],
-};
-
-// ============================================
-// SUB-MODULE: MEETINGS
-// ============================================
+export const MOCK_DONATIONS: Record<number, any[]> = {};
 export const MOCK_MEETINGS: Record<number, any[]> = {
   1: [
     { id: 1, date: "2024-09-15", title: "Annual General Meeting", venue: "Main Hall", attended: true, duration: "2h", notes: "Discussed annual targets" },
@@ -241,14 +321,31 @@ export const MOCK_MEETINGS: Record<number, any[]> = {
 };
 
 // ============================================
-// HELPER: Get sub-module data by dealer ID
+// HELPER: Get sub-module data by parent ID
 // ============================================
-export function getMockSubModuleData(subModule: string, dealerId: number): any[] {
+export function getMockSubModuleData(subModule: string, parentId: number): any[] {
   switch (subModule) {
-    case "tasks": return MOCK_TASKS[dealerId] ?? [];
-    case "subscriptions": return MOCK_SUBSCRIPTIONS[dealerId] ?? [];
-    case "donations": return MOCK_DONATIONS[dealerId] ?? [];
-    case "meetings": return MOCK_MEETINGS[dealerId] ?? [];
+    case "tasks":
+      return MOCK_ALL_TASKS.filter(t => t.context_id === parentId);
+    case "subscriptions":
+      return MOCK_SUBSCRIPTIONS[parentId] ?? [];
+    case "donations":
+      return MOCK_ALL_DONATIONS.filter(d => d.dealer_id === parentId);
+    case "meetings":
+      return MOCK_MEETINGS[parentId] ?? [];
+    default:
+      return [];
+  }
+}
+
+// ============================================
+// HELPER: Get all entity records (standalone)
+// ============================================
+export function getMockEntityList(entityName: string): any[] {
+  switch (entityName) {
+    case "dealer": return MOCK_DEALERS;
+    case "task": return MOCK_ALL_TASKS;
+    case "donation": return MOCK_ALL_DONATIONS;
     default: return [];
   }
 }

@@ -24,20 +24,9 @@ interface Module {
 
 // Fallback static nav if API fails
 const FALLBACK_NAV: Module[] = [
-  {
-    id: 1,
-    name: "Dealers",
-    icon: "users",
-    route: "/dealers",
-    subModules: [],
-  },
-  {
-    id: 2,
-    name: "Donations",
-    icon: "heart",
-    route: "/donations",
-    subModules: [],
-  },
+  { id: 1, name: "Dealers", icon: "users", route: "/dealers", subModules: [] },
+  { id: 2, name: "Tasks", icon: "checkSquare", route: "/tasks", subModules: [] },
+  { id: 3, name: "Donations", icon: "heart", route: "/donations", subModules: [] },
 ];
 
 function getIcon(iconName: string) {
@@ -63,6 +52,8 @@ function getIcon(iconName: string) {
     barchart: LucideIcons.BarChart,
     file: LucideIcons.FileText,
     bell: LucideIcons.Bell,
+    checksquare: LucideIcons.CheckSquare,
+    tasks: LucideIcons.CheckSquare,
   };
   return mappings[iconName.toLowerCase()] || (LucideIcons as any)[key] || LucideIcons.LayoutDashboard;
 }
