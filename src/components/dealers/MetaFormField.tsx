@@ -34,6 +34,7 @@ export interface FieldMeta {
   };
   display_key?: string;
   collection?: boolean;
+  standalone?: boolean;
 }
 
 interface MetaFormFieldProps {

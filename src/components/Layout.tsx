@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Home, Users, Menu, ChevronDown, ChevronRight, Loader2 } from "lucide-react";
+import { Home, Users, Menu, Loader2 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import * as LucideIcons from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -29,10 +29,7 @@ const FALLBACK_NAV: Module[] = [
     name: "Dealers",
     icon: "users",
     route: "/dealers",
-    subModules: [
-      { id: 11, name: "Dealer Details", route: "/dealers/details" },
-      { id: 12, name: "Subscriptions", route: "/dealers/subscriptions" },
-    ],
+    subModules: [],
   },
   {
     id: 2,
@@ -75,7 +72,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [modules, setModules] = useState<Module[]>([]);
-  const [expandedModules, setExpandedModules] = useState<Set<number>>(new Set());
   const [loadingModules, setLoadingModules] = useState(true);
 
   useEffect(() => {
@@ -90,11 +86,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       const result = await modulesAPI.getModules();
       if (result.success && Array.isArray(result.data) && result.data.length > 0) {
         setModules(result.data);
-        // Auto-expand module whose route matches current path
-        const active = result.data.find((m: Module) =>
-          m.subModules?.some((s) => location.pathname.startsWith(s.route))
-        );
-        if (active) setExpandedModules(new Set([active.id]));
       } else {
         setModules(FALLBACK_NAV);
       }
@@ -103,14 +94,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     } finally {
       setLoadingModules(false);
     }
-  };
-
-  const toggleExpand = (id: number) => {
-    setExpandedModules((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
   };
 
   const isActiveRoute = (route: string) =>
@@ -156,73 +139,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             ) : (
               modules.map((mod) => {
                 const Icon = getIcon(mod.icon);
-                const hasSubModules = mod.subModules && mod.subModules.length > 0;
-                const isExpanded = expandedModules.has(mod.id);
                 const isActive = isActiveRoute(mod.route);
 
                 return (
-                  <div key={mod.id}>
-                    {hasSubModules ? (
-                      // Expandable parent
-                      <button
-                        onClick={() => toggleExpand(mod.id)}
-                        className={cn(
-                          "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
-                          isActive || isExpanded
-                            ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                            : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                        )}
-                      >
-                        <Icon className="h-5 w-5 shrink-0" />
-                        <span className="flex-1 text-left">{mod.name}</span>
-                        {isExpanded ? (
-                          <ChevronDown className="h-4 w-4" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4" />
-                        )}
-                      </button>
-                    ) : (
-                      // Direct link
-                      <Link
-                        to={mod.route}
-                        onClick={() => setSidebarOpen(false)}
-                        className={cn(
-                          "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
-                          isActive
-                            ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
-                            : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                        )}
-                      >
-                        <Icon className="h-5 w-5 shrink-0" />
-                        {mod.name}
-                      </Link>
+                  <Link
+                    key={mod.id}
+                    to={mod.route}
+                    onClick={() => setSidebarOpen(false)}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
+                      isActive
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
+                        : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                     )}
-
-                    {/* Sub-modules */}
-                    {hasSubModules && isExpanded && (
-                      <div className="ml-4 mt-0.5 space-y-0.5 border-l border-sidebar-border pl-3">
-                        {mod.subModules.map((sub) => {
-                          const subActive = location.pathname.startsWith(sub.route);
-                          return (
-                            <Link
-                              key={sub.id}
-                              to={sub.route}
-                              onClick={() => setSidebarOpen(false)}
-                              className={cn(
-                                "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all",
-                                subActive
-                                  ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium"
-                                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                              )}
-                            >
-                              <div className="h-1.5 w-1.5 rounded-full bg-current opacity-60" />
-                              {sub.name}
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
+                  >
+                    <Icon className="h-5 w-5 shrink-0" />
+                    {mod.name}
+                  </Link>
                 );
               })
             )}
