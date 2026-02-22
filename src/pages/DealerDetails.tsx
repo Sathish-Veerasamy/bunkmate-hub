@@ -1,143 +1,162 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Mail, Phone, MapPin, Plus } from "lucide-react";
 import DataTable, { DataTableColumn, DataTableAction } from "@/components/ui/data-table";
+import { api } from "@/lib/api";
+import {
+  USE_MOCK,
+  DEALER_META,
+  getMockDealerById,
+  getMockSubModuleData,
+} from "@/lib/mock-data";
 
-// Hardcoded metadata – sub-module tabs from collection+standalone fields
-const SUB_MODULE_TABS = [
-  { key: "tasks", label: "Tasks" },
-  { key: "subscriptions", label: "Subscriptions" },
-  { key: "donations", label: "Donations" },
-  { key: "meetings", label: "Meetings" },
-];
+// ── Derive sub-module tabs from meta (collection + standalone) ───
+const SUB_MODULE_TABS = DEALER_META.fields
+  .filter((f) => f.type === "ref_entity" && f.collection && f.standalone)
+  .map((f) => ({
+    key: f.name,
+    label: f.name.charAt(0).toUpperCase() + f.name.slice(1),
+    displayKey: f.display_key,
+    refEntity: f.relational_mapping?.ref_entity,
+    mappedBy: f.relational_mapping?.mapped_by,
+  }));
 
-// Sample dealer data
-const getDealerById = (id: string) => {
-  const dealers = [
-    {
-      id: 1, dealerName: "Rajesh Kumar", dealershipName: "Kumar Petroleum Services",
-      address: "123 Main Road, Dindigul - 624001", contact: "9876543210",
-      email: "rajesh@example.com", company: "IOC", status: "Sale",
-      constitution: "Proprietor", gstNo: "33AAAAA1234A1Z5", establishedYear: "2015",
-      active: true, district: "Dindigul", pincode: "624001",
-      emergencyContact: "9876543299", dateOfBirth: "1985-05-15", gender: "M",
-      bloodGroup: "O+", education: "B.Com", aadharNumber: "1234 5678 9012",
-      officeDetails: "Office: 0451-2345678", otherActivities: "Transport business",
-    },
-    {
-      id: 2, dealerName: "Priya Sharma", dealershipName: "Sharma Fuel Station",
-      address: "456 Market Street, Dindigul - 624002", contact: "9876543211",
-      email: "priya@example.com", company: "BPC", status: "Dist",
-      constitution: "Partnership", gstNo: "33BBBBB5678B1Z5", establishedYear: "2018",
-      active: true, district: "Dindigul", pincode: "624002",
-    },
-    {
-      id: 3, dealerName: "Mohammed Ali", dealershipName: "Ali Petro Center",
-      address: "789 Highway Road, Dindigul - 624003", contact: "9876543212",
-      email: "ali@example.com", company: "HPC", status: "CRE",
-      constitution: "Limited", gstNo: "33CCCCC9012C1Z5", establishedYear: "2020",
-      active: false, district: "Dindigul", pincode: "624003",
-    },
-    {
-      id: 4, dealerName: "Lakshmi Devi", dealershipName: "Devi Fuel Solutions",
-      address: "321 Temple Road, Dindigul - 624004", contact: "9876543213",
-      email: "lakshmi@example.com", company: "IOC", status: "Sale",
-      constitution: "Proprietor", gstNo: "33DDDDD3456D1Z5", establishedYear: "2012",
-      active: true, district: "Dindigul", pincode: "624004",
-    },
-  ];
-  return dealers.find((d) => d.id === parseInt(id));
-};
-
-// ── Sub-module table configs ─────────────────────────────────────
-
-const tasksColumns: DataTableColumn[] = [
-  { id: "title", label: "Title", visible: true },
-  { id: "status", label: "Status", visible: true, filterable: true, filterType: "select", filterOptions: [{ label: "Pending", value: "Pending" }, { label: "Completed", value: "Completed" }, { label: "In Progress", value: "In Progress" }] },
-  { id: "priority", label: "Priority", visible: true, filterable: true, filterType: "select", filterOptions: [{ label: "High", value: "High" }, { label: "Medium", value: "Medium" }, { label: "Low", value: "Low" }] },
-  { id: "assignedTo", label: "Assigned To", visible: true },
-  { id: "dueDate", label: "Due Date", visible: true },
-];
-
-const tasksData = [
-  { id: 1, title: "Follow up on order", status: "Pending", priority: "High", assignedTo: "Admin", dueDate: "2024-10-15" },
-  { id: 2, title: "Site inspection", status: "Completed", priority: "Medium", assignedTo: "Inspector", dueDate: "2024-09-20" },
-  { id: 3, title: "Document verification", status: "In Progress", priority: "High", assignedTo: "Admin", dueDate: "2024-11-01" },
-];
-
-const subscriptionsColumns: DataTableColumn[] = [
-  { id: "planName", label: "Plan", visible: true },
-  { id: "startDate", label: "Start Date", visible: true },
-  { id: "endDate", label: "End Date", visible: true },
-  { id: "amount", label: "Amount", visible: true },
-  { id: "status", label: "Status", visible: true, filterable: true, filterType: "select", filterOptions: [{ label: "Active", value: "Active" }, { label: "Expired", value: "Expired" }],
-    render: (value: string) => (
-      <Badge variant={value === "Active" ? "default" : "secondary"} className={value === "Active" ? "bg-success hover:bg-success/90" : ""}>
-        {value}
-      </Badge>
-    ),
+// ── Sub-module column definitions ────────────────────────────────
+const SUB_MODULE_COLUMNS: Record<string, { columns: DataTableColumn[]; searchFields: string[] }> = {
+  tasks: {
+    columns: [
+      { id: "title", label: "Title", visible: true },
+      { id: "status", label: "Status", visible: true, filterable: true, filterType: "select", filterOptions: [{ label: "Pending", value: "Pending" }, { label: "Completed", value: "Completed" }, { label: "In Progress", value: "In Progress" }],
+        render: (value: string) => {
+          const colors: Record<string, string> = { Pending: "bg-amber-100 text-amber-800", Completed: "bg-green-100 text-green-800", "In Progress": "bg-blue-100 text-blue-800" };
+          return <Badge variant="secondary" className={colors[value] || ""}>{value}</Badge>;
+        },
+      },
+      { id: "priority", label: "Priority", visible: true, filterable: true, filterType: "select", filterOptions: [{ label: "High", value: "High" }, { label: "Medium", value: "Medium" }, { label: "Low", value: "Low" }],
+        render: (value: string) => {
+          const colors: Record<string, string> = { High: "bg-red-100 text-red-800", Medium: "bg-amber-100 text-amber-800", Low: "bg-green-100 text-green-800" };
+          return <Badge variant="secondary" className={colors[value] || ""}>{value}</Badge>;
+        },
+      },
+      { id: "assignedTo", label: "Assigned To", visible: true },
+      { id: "dueDate", label: "Due Date", visible: true },
+      { id: "createdAt", label: "Created", visible: true },
+    ],
+    searchFields: ["title", "status", "assignedTo", "priority"],
   },
-];
-
-const subscriptionsData = [
-  { id: 1, planName: "Premium Plan", startDate: "2024-01-01", endDate: "2024-12-31", amount: "₹12,000", status: "Active" },
-  { id: 2, planName: "Basic Plan", startDate: "2023-01-01", endDate: "2023-12-31", amount: "₹6,000", status: "Expired" },
-];
-
-const donationsColumns: DataTableColumn[] = [
-  { id: "date", label: "Date", visible: true },
-  { id: "purpose", label: "Purpose", visible: true },
-  { id: "amount", label: "Amount", visible: true },
-  { id: "receiptNo", label: "Receipt No", visible: true },
-];
-
-const donationsData = [
-  { id: 1, date: "2024-08-15", purpose: "Independence Day Event", amount: "₹10,000", receiptNo: "RCP-001" },
-  { id: 2, date: "2024-01-26", purpose: "Republic Day Event", amount: "₹8,000", receiptNo: "RCP-002" },
-  { id: 3, date: "2023-12-25", purpose: "Christmas Charity", amount: "₹5,000", receiptNo: "RCP-003" },
-];
-
-const meetingsColumns: DataTableColumn[] = [
-  { id: "date", label: "Date", visible: true },
-  { id: "title", label: "Meeting Title", visible: true },
-  { id: "venue", label: "Venue", visible: true },
-  { id: "attended", label: "Attendance", visible: true, filterable: true, filterType: "select", filterOptions: [{ label: "Present", value: "true" }, { label: "Absent", value: "false" }],
-    render: (value: boolean) => (
-      <Badge variant={value ? "default" : "secondary"} className={value ? "bg-success hover:bg-success/90" : ""}>
-        {value ? "Present" : "Absent"}
-      </Badge>
-    ),
+  subscriptions: {
+    columns: [
+      { id: "planName", label: "Plan", visible: true },
+      { id: "startDate", label: "Start Date", visible: true },
+      { id: "endDate", label: "End Date", visible: true },
+      { id: "amount", label: "Amount", visible: true },
+      { id: "billingCycle", label: "Billing Cycle", visible: true },
+      { id: "status", label: "Status", visible: true, filterable: true, filterType: "select", filterOptions: [{ label: "Active", value: "Active" }, { label: "Expired", value: "Expired" }],
+        render: (value: string) => (
+          <Badge variant={value === "Active" ? "default" : "secondary"} className={value === "Active" ? "bg-green-100 text-green-800" : "bg-muted text-muted-foreground"}>
+            {value}
+          </Badge>
+        ),
+      },
+    ],
+    searchFields: ["planName", "status", "amount", "billingCycle"],
   },
-];
-
-const meetingsData = [
-  { id: 1, date: "2024-09-15", title: "Annual General Meeting", venue: "Main Hall", attended: true },
-  { id: 2, date: "2024-06-20", title: "Quarterly Review", venue: "Conference Room", attended: true },
-  { id: 3, date: "2024-03-10", title: "Budget Planning", venue: "Board Room", attended: false },
-  { id: 4, date: "2024-01-05", title: "New Year Planning", venue: "Main Hall", attended: true },
-];
-
-const SUB_MODULE_CONFIG: Record<string, { columns: DataTableColumn[]; data: any[]; searchFields: string[] }> = {
-  tasks: { columns: tasksColumns, data: tasksData, searchFields: ["title", "status", "assignedTo"] },
-  subscriptions: { columns: subscriptionsColumns, data: subscriptionsData, searchFields: ["planName", "status", "amount"] },
-  donations: { columns: donationsColumns, data: donationsData, searchFields: ["purpose", "amount", "receiptNo"] },
-  meetings: { columns: meetingsColumns, data: meetingsData, searchFields: ["title", "venue"] },
+  donations: {
+    columns: [
+      { id: "date", label: "Date", visible: true },
+      { id: "purpose", label: "Purpose", visible: true },
+      { id: "amount", label: "Amount", visible: true },
+      { id: "mode", label: "Mode", visible: true, filterable: true, filterType: "select", filterOptions: [{ label: "Cash", value: "Cash" }, { label: "Cheque", value: "Cheque" }, { label: "UPI", value: "UPI" }] },
+      { id: "receiptNo", label: "Receipt No", visible: true },
+    ],
+    searchFields: ["purpose", "amount", "receiptNo", "mode"],
+  },
+  meetings: {
+    columns: [
+      { id: "date", label: "Date", visible: true },
+      { id: "title", label: "Meeting Title", visible: true },
+      { id: "venue", label: "Venue", visible: true },
+      { id: "duration", label: "Duration", visible: true },
+      { id: "attended", label: "Attendance", visible: true, filterable: true, filterType: "select", filterOptions: [{ label: "Present", value: "true" }, { label: "Absent", value: "false" }],
+        render: (value: boolean) => (
+          <Badge variant={value ? "default" : "secondary"} className={value ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
+            {value ? "Present" : "Absent"}
+          </Badge>
+        ),
+      },
+      { id: "notes", label: "Notes", visible: true },
+    ],
+    searchFields: ["title", "venue", "notes"],
+  },
 };
 
 // ── Component ────────────────────────────────────────────────────
-
 export default function DealerDetails() {
   const { id, tab } = useParams();
   const navigate = useNavigate();
-  const dealer = getDealerById(id!);
   const activeTab = tab || "details";
+  const dealerId = parseInt(id!);
+
+  const [dealer, setDealer] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [subModuleData, setSubModuleData] = useState<Record<string, any[]>>({});
+
+  // Fetch dealer
+  useEffect(() => {
+    const fetchDealer = async () => {
+      setLoading(true);
+      if (USE_MOCK) {
+        setDealer(getMockDealerById(dealerId));
+      } else {
+        const res = await api.get<any>(`/dealers/${dealerId}`);
+        setDealer(res.success ? res.data : null);
+      }
+      setLoading(false);
+    };
+    fetchDealer();
+  }, [dealerId]);
+
+  // Fetch sub-module data
+  useEffect(() => {
+    const fetchSubModules = async () => {
+      const map: Record<string, any[]> = {};
+      for (const t of SUB_MODULE_TABS) {
+        if (USE_MOCK) {
+          map[t.key] = getMockSubModuleData(t.key, dealerId);
+        } else {
+          const endpoint = t.mappedBy
+            ? `/${t.refEntity}s?${t.mappedBy}=${dealerId}`
+            : `/${t.refEntity}s`;
+          const res = await api.get<any>(endpoint);
+          if (res.success && res.data) {
+            map[t.key] = Array.isArray(res.data)
+              ? res.data
+              : res.data.data ?? res.data.content ?? [];
+          } else {
+            map[t.key] = [];
+          }
+        }
+      }
+      setSubModuleData(map);
+    };
+    fetchSubModules();
+  }, [dealerId]);
 
   const handleTabChange = (value: string) => {
     navigate(`/dealers/${id}/${value}`, { replace: true });
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
 
   if (!dealer) {
     return (
@@ -172,14 +191,14 @@ export default function DealerDetails() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-3xl font-bold">{dealer.dealerName}</h1>
+          <h1 className="text-3xl font-bold">{dealer.name || dealer.dealerName}</h1>
           <p className="text-muted-foreground">{dealer.dealershipName}</p>
         </div>
         <Badge
-          variant={dealer.active ? "default" : "secondary"}
-          className={dealer.active ? "bg-success hover:bg-success/90 text-lg px-4 py-2" : "text-lg px-4 py-2"}
+          variant={dealer.is_active || dealer.active ? "default" : "secondary"}
+          className={(dealer.is_active || dealer.active) ? "bg-green-100 text-green-800 text-lg px-4 py-2" : "text-lg px-4 py-2"}
         >
-          {dealer.active ? "Active" : "Inactive"}
+          {(dealer.is_active || dealer.active) ? "Active" : "Inactive"}
         </Badge>
       </div>
 
@@ -188,7 +207,12 @@ export default function DealerDetails() {
         <TabsList>
           <TabsTrigger value="details">Details</TabsTrigger>
           {SUB_MODULE_TABS.map((t) => (
-            <TabsTrigger key={t.key} value={t.key}>{t.label}</TabsTrigger>
+            <TabsTrigger key={t.key} value={t.key}>
+              {t.label}
+              <Badge variant="secondary" className="ml-2 text-xs px-1.5 py-0">
+                {(subModuleData[t.key] ?? []).length}
+              </Badge>
+            </TabsTrigger>
           ))}
         </TabsList>
 
@@ -199,7 +223,7 @@ export default function DealerDetails() {
               <CardHeader><CardTitle>Personal Information</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 {[
-                  ["Full Name", dealer.dealerName],
+                  ["Full Name", dealer.name || dealer.dealerName],
                   ["Date of Birth", dealer.dateOfBirth || "N/A"],
                   ["Gender", dealer.gender === "M" ? "Male" : dealer.gender === "F" ? "Female" : "N/A"],
                   ["Blood Group", dealer.bloodGroup || "N/A"],
@@ -219,7 +243,7 @@ export default function DealerDetails() {
               <CardContent className="space-y-4">
                 <div className="flex items-start gap-3">
                   <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
-                  <div><p className="text-sm text-muted-foreground">Primary Contact</p><p className="font-medium">{dealer.contact}</p></div>
+                  <div><p className="text-sm text-muted-foreground">Primary Contact</p><p className="font-medium">{dealer.phone || dealer.contact}</p></div>
                 </div>
                 <div className="flex items-start gap-3">
                   <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
@@ -242,10 +266,13 @@ export default function DealerDetails() {
                 {[
                   ["Dealership Name", dealer.dealershipName],
                   ["Company", dealer.company],
-                  ["Status", dealer.status],
+                  ["Category", dealer.category || "N/A"],
                   ["Constitution", dealer.constitution],
                   ["GST Number", dealer.gstNo || "N/A"],
                   ["Established Year", dealer.establishedYear],
+                  ["Rating", dealer.rating?.toString() || "N/A"],
+                  ["Total Orders", dealer.total_orders?.toString() || "N/A"],
+                  ["Registered Date", dealer.registered_date || "N/A"],
                 ].map(([label, value]) => (
                   <div key={label as string} className="space-y-1">
                     <p className="text-sm text-muted-foreground">{label}</p>
@@ -257,21 +284,20 @@ export default function DealerDetails() {
           </div>
         </TabsContent>
 
-        {/* Dynamic sub-module tabs using DataTable */}
+        {/* Dynamic sub-module tabs */}
         {SUB_MODULE_TABS.map((t) => {
-          const config = SUB_MODULE_CONFIG[t.key];
+          const config = SUB_MODULE_COLUMNS[t.key];
           if (!config) return null;
+          const data = subModuleData[t.key] ?? [];
           return (
-            <TabsContent key={t.key} value={t.key}>
-              <Card className="p-6">
-                <DataTable
-                  data={config.data}
-                  columns={config.columns}
-                  actions={subModuleActions(t.key)}
-                  searchableFields={config.searchFields}
-                  customActions={subModuleCustomActions(t.key)}
-                />
-              </Card>
+            <TabsContent key={t.key} value={t.key} className="mt-0">
+              <DataTable
+                data={data}
+                columns={config.columns}
+                actions={subModuleActions(t.key)}
+                searchableFields={config.searchFields}
+                customActions={subModuleCustomActions(t.key)}
+              />
             </TabsContent>
           );
         })}
