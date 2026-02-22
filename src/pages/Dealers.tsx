@@ -1,19 +1,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Plus,
-  Search,
-  Download,
-  Upload,
-  UserX,
-  Eye,
-  Pencil,
-  Settings2,
-} from "lucide-react";
+import { Plus, UserX, Download, Upload } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import DealersTable from "@/components/dealers/DealersTable";
-import DynamicDealerForm from "@/components/dealers/DynamicDealerForm";
+import DynamicEntityForm from "@/components/common/DynamicEntityForm";
 import {
   Dialog,
   DialogContent,
@@ -23,7 +13,6 @@ import {
 } from "@/components/ui/dialog";
 
 export default function Dealers() {
-  
   const [showForm, setShowForm] = useState(false);
   const [editingDealer, setEditingDealer] = useState<any>(null);
 
@@ -44,15 +33,13 @@ export default function Dealers() {
 
   return (
     <div>
-      {/* Table Card */}
       <Card className="p-6">
-        <DealersTable 
+        <DealersTable
           onEdit={handleEditDealer}
           onAddDealer={handleAddDealer}
         />
       </Card>
 
-      {/* Add/Edit Dealer Dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -65,8 +52,9 @@ export default function Dealers() {
                 : "Fill in the dealer information below"}
             </DialogDescription>
           </DialogHeader>
-          <DynamicDealerForm
-            dealer={editingDealer}
+          <DynamicEntityForm
+            entityName="dealer"
+            record={editingDealer}
             onClose={handleCloseForm}
           />
         </DialogContent>
