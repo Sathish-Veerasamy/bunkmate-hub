@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -79,6 +79,13 @@ export default function DataTable({
   const [sortColumn, setSortColumn] = useState<string>("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [columns, setColumns] = useState<DataTableColumn[]>(initialColumns);
+
+  // Sync columns when initialColumns change (e.g. from async metainfo loading)
+  useEffect(() => {
+    if (initialColumns.length > 0) {
+      setColumns(initialColumns);
+    }
+  }, [initialColumns]);
   const [fieldFilters, setFieldFilters] = useState<Record<string, string>>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(10);
