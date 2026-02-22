@@ -6,45 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import MetaFormField, { FieldMeta } from "./MetaFormField";
 import { Loader2 } from "lucide-react";
-
-interface EntityMeta {
-  entity: string;
-  table_name: string;
-  primary_key: string;
-  fields: FieldMeta[];
-}
-
-const HARDCODED_DEALER_META: EntityMeta = {
-  entity: "dealer",
-  table_name: "dealers",
-  primary_key: "id",
-  fields: [
-    { name: "name", type: "string", nullable: false, partial_field: true, display_type: "Single Line", constraints: { max_len: 200, min_len: 2 } },
-    { name: "description", type: "multi_line", nullable: true, partial_field: true, display_type: "Multi Line" },
-    { name: "phone", type: "phone", nullable: true, partial_field: true, display_type: "Phone" },
-    { name: "email", type: "email", nullable: true, partial_field: true, display_type: "Email", constraints: { unique: true } },
-    { name: "website", type: "string", nullable: true, partial_field: true, display_type: "Single Line" },
-    { name: "rating", type: "decimal", nullable: true, partial_field: true, display_type: "Decimal", constraints: { precision: 5, scale: 2 } },
-    { name: "total_orders", type: "number", nullable: true, partial_field: true, display_type: "Number" },
-    { name: "is_active", type: "boolean", nullable: false, partial_field: true, display_type: "Checkbox", default: true },
-    { name: "registered_date", type: "date", nullable: true, partial_field: true, display_type: "Date Picker" },
-    { name: "last_visit", type: "date_time", nullable: true, partial_field: true, display_type: "Date Time Picker" },
-    { name: "category", type: "enum", nullable: true, partial_field: true, display_type: "Dropdown", constraints: { values: ["LOCAL", "REGIONAL", "NATIONAL"] } },
-    { name: "documents", type: "file", nullable: true, partial_field: false, display_type: "File Upload", constraints: { allowed_types: ["pdf", "jpg", "png"], max_size_mb: 10 } },
-    { name: "metadata", type: "json", nullable: true, partial_field: false, display_type: "JSON Editor" },
-    { name: "status", type: "ref_entity", collection: false, nullable: false, partial_field: true, display_type: "Dropdown", display_key: "name", relational_mapping: { relationship_type: "MANY_TO_ONE", ref_entity: "status", join_column: "status_id", referenced_column: "id", on_delete: "restrict", fetch: "lazy" } },
-    { name: "tasks", type: "ref_entity", collection: true, standalone: true, nullable: true, partial_field: false, display_type: "Child Table", display_key: "title", relational_mapping: { relationship_type: "ONE_TO_MANY", ref_entity: "task", mapped_by: "context_id", context_filter: { context_type: "dealer" }, fetch: "lazy" } },
-    { name: "subscriptions", type: "ref_entity", collection: true, standalone: true, nullable: true, partial_field: false, display_type: "Child Table", display_key: "plan_name", relational_mapping: { relationship_type: "ONE_TO_MANY", ref_entity: "subscription", mapped_by: "dealer_id", fetch: "lazy" } },
-    { name: "donations", type: "ref_entity", collection: true, standalone: true, nullable: true, partial_field: false, display_type: "Child Table", display_key: "purpose", relational_mapping: { relationship_type: "ONE_TO_MANY", ref_entity: "donation", mapped_by: "dealer_id", fetch: "lazy" } },
-    { name: "meetings", type: "ref_entity", collection: true, standalone: true, nullable: true, partial_field: false, display_type: "Child Table", display_key: "title", relational_mapping: { relationship_type: "ONE_TO_MANY", ref_entity: "meeting", mapped_by: "dealer_id", fetch: "lazy" } },
-  ],
-};
-
-const HARDCODED_STATUSES = [
-  { id: 1, name: "Active", code: "ACTIVE", color: "#22c55e" },
-  { id: 2, name: "Inactive", code: "INACTIVE", color: "#ef4444" },
-  { id: 3, name: "Pending", code: "PENDING", color: "#f59e0b" },
-];
+import { USE_MOCK, DEALER_META, MOCK_STATUSES, type EntityMeta } from "@/lib/mock-data";
 
 interface DynamicDealerFormProps {
   dealer?: any;
@@ -77,11 +39,15 @@ export default function DynamicDealerForm({
   useEffect(() => {
     const fetchMeta = async () => {
       setMetaLoading(true);
-      const res = await api.get<EntityMeta>("/dealers/_metainfo");
-      if (res.success && res.data) {
-        setMeta(res.data);
+      if (USE_MOCK) {
+        setMeta(DEALER_META);
       } else {
-        setMeta(HARDCODED_DEALER_META);
+        const res = await api.get<EntityMeta>("/dealers/_metainfo");
+        if (res.success && res.data) {
+          setMeta(res.data);
+        } else {
+          setMeta(DEALER_META);
+        }
       }
       if (dealer) reset(dealer);
       setMetaLoading(false);
@@ -102,14 +68,20 @@ export default function DynamicDealerForm({
       const refEntity = f.relational_mapping?.ref_entity;
       if (!refEntity) return;
 
-      const res = await api.get<any>(`/${refEntity}s`);
-      if (res.success && res.data) {
-        const list = Array.isArray(res.data)
-          ? res.data
-          : res.data.data ?? res.data.content ?? [];
-        setRefOptionsMap((prev) => ({ ...prev, [f.name]: list }));
-      } else if (refEntity === "status") {
-        setRefOptionsMap((prev) => ({ ...prev, [f.name]: HARDCODED_STATUSES }));
+      if (USE_MOCK) {
+        if (refEntity === "status") {
+          setRefOptionsMap((prev) => ({ ...prev, [f.name]: MOCK_STATUSES }));
+        }
+      } else {
+        const res = await api.get<any>(`/${refEntity}s`);
+        if (res.success && res.data) {
+          const list = Array.isArray(res.data)
+            ? res.data
+            : res.data.data ?? res.data.content ?? [];
+          setRefOptionsMap((prev) => ({ ...prev, [f.name]: list }));
+        } else if (refEntity === "status") {
+          setRefOptionsMap((prev) => ({ ...prev, [f.name]: MOCK_STATUSES }));
+        }
       }
     });
   }, [meta]);
