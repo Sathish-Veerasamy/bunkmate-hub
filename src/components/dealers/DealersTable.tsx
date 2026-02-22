@@ -82,7 +82,7 @@ export default function DealersTable({ onEdit, onAddDealer }: DealersTableProps)
     {
       icon: "view",
       label: "View Details",
-      onClick: (dealer) => navigate(`/dealers/${dealer.id}`),
+      onClick: (dealer) => navigate(`/dealers/${dealer.id}/details`),
     },
     {
       icon: "edit",

@@ -33,7 +33,10 @@ const HARDCODED_DEALER_META: EntityMeta = {
     { name: "documents", type: "file", nullable: true, partial_field: false, display_type: "File Upload", constraints: { allowed_types: ["pdf", "jpg", "png"], max_size_mb: 10 } },
     { name: "metadata", type: "json", nullable: true, partial_field: false, display_type: "JSON Editor" },
     { name: "status", type: "ref_entity", collection: false, nullable: false, partial_field: true, display_type: "Dropdown", display_key: "name", relational_mapping: { relationship_type: "MANY_TO_ONE", ref_entity: "status", join_column: "status_id", referenced_column: "id", on_delete: "restrict", fetch: "lazy" } },
-    { name: "tasks", type: "ref_entity", collection: true, nullable: true, partial_field: false, display_type: "Child Table", display_key: "title", relational_mapping: { relationship_type: "ONE_TO_MANY", ref_entity: "task", mapped_by: "context_id", context_filter: { context_type: "dealer" }, fetch: "lazy" } },
+    { name: "tasks", type: "ref_entity", collection: true, standalone: true, nullable: true, partial_field: false, display_type: "Child Table", display_key: "title", relational_mapping: { relationship_type: "ONE_TO_MANY", ref_entity: "task", mapped_by: "context_id", context_filter: { context_type: "dealer" }, fetch: "lazy" } },
+    { name: "subscriptions", type: "ref_entity", collection: true, standalone: true, nullable: true, partial_field: false, display_type: "Child Table", display_key: "plan_name", relational_mapping: { relationship_type: "ONE_TO_MANY", ref_entity: "subscription", mapped_by: "dealer_id", fetch: "lazy" } },
+    { name: "donations", type: "ref_entity", collection: true, standalone: true, nullable: true, partial_field: false, display_type: "Child Table", display_key: "purpose", relational_mapping: { relationship_type: "ONE_TO_MANY", ref_entity: "donation", mapped_by: "dealer_id", fetch: "lazy" } },
+    { name: "meetings", type: "ref_entity", collection: true, standalone: true, nullable: true, partial_field: false, display_type: "Child Table", display_key: "title", relational_mapping: { relationship_type: "ONE_TO_MANY", ref_entity: "meeting", mapped_by: "dealer_id", fetch: "lazy" } },
   ],
 };
 
