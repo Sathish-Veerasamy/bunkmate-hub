@@ -1,64 +1,39 @@
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Plus, UserX, Download, Upload } from "lucide-react";
+import { UserX, Download, Upload } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import DealersTable from "@/components/dealers/DealersTable";
-import DynamicEntityForm from "@/components/common/DynamicEntityForm";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import EntityDataTable from "@/components/common/EntityDataTable";
 
 export default function Dealers() {
-  const [showForm, setShowForm] = useState(false);
-  const [editingDealer, setEditingDealer] = useState<any>(null);
+  const navigate = useNavigate();
 
-  const handleAddDealer = () => {
-    setEditingDealer(null);
-    setShowForm(true);
-  };
-
-  const handleEditDealer = (dealer: any) => {
-    setEditingDealer(dealer);
-    setShowForm(true);
-  };
-
-  const handleCloseForm = () => {
-    setShowForm(false);
-    setEditingDealer(null);
-  };
+  const extraActions = (
+    <>
+      <Button variant="outline" size="sm" className="h-8 text-xs">
+        <UserX className="h-3.5 w-3.5 mr-1.5" />
+        Make Inactive
+      </Button>
+      <Button variant="outline" size="sm" className="h-8 text-xs">
+        <Download className="h-3.5 w-3.5 mr-1.5" />
+        Export
+      </Button>
+      <Button variant="outline" size="sm" className="h-8 text-xs">
+        <Upload className="h-3.5 w-3.5 mr-1.5" />
+        Import
+      </Button>
+    </>
+  );
 
   return (
     <div>
       <Card className="p-6">
-        <DealersTable
-          onEdit={handleEditDealer}
-          onAddDealer={handleAddDealer}
+        <EntityDataTable
+          entityName="dealer"
+          label="Dealer"
+          onView={(dealer) => navigate(`/dealers/${dealer.id}/details`)}
+          extraActions={extraActions}
         />
       </Card>
-
-      <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingDealer ? "Edit Dealer" : "Add New Dealer"}
-            </DialogTitle>
-            <DialogDescription>
-              {editingDealer
-                ? "Update dealer information below"
-                : "Fill in the dealer information below"}
-            </DialogDescription>
-          </DialogHeader>
-          <DynamicEntityForm
-            entityName="dealer"
-            record={editingDealer}
-            onClose={handleCloseForm}
-          />
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
