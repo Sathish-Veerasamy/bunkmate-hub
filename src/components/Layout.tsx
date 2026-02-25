@@ -103,26 +103,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 bg-sidebar text-sidebar-foreground transform transition-transform duration-300 ease-in-out lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 w-20 bg-sidebar text-sidebar-foreground transform transition-transform duration-300 ease-in-out lg:translate-x-0",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         <div className="flex h-full flex-col">
           {/* Logo */}
-          <div className="flex h-16 items-center px-6 border-b border-sidebar-border">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center">
-                <Users className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold">Dashboard</h1>
-                <p className="text-xs text-sidebar-foreground/70">Management System</p>
-              </div>
+          <div className="flex h-14 items-center justify-center border-b border-sidebar-border">
+            <div className="w-9 h-9 rounded-lg bg-gradient-primary flex items-center justify-center">
+              <Users className="h-5 w-5 text-white" />
             </div>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 overflow-y-auto space-y-0.5 px-3 py-4">
+          <nav className="flex-1 overflow-y-auto space-y-1 px-2 py-3">
             {loadingModules ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-5 w-5 animate-spin text-sidebar-foreground/50" />
@@ -138,7 +132,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     to={mod.route}
                     onClick={() => setSidebarOpen(false)}
                     className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
+                      "flex flex-col items-center gap-0.5 rounded-lg px-1 py-2 text-[10px] font-medium transition-all text-center",
                       isActive
                         ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
                         : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
@@ -153,17 +147,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </nav>
 
           {/* Footer */}
-          <div className="border-t border-sidebar-border p-4">
-            <div className="text-xs text-sidebar-foreground/60">
-              <p className="font-semibold">DDPWA System</p>
-              <p>Version 1.0</p>
-            </div>
+          <div className="border-t border-sidebar-border p-2 text-center">
+            <p className="text-[9px] text-sidebar-foreground/60 font-semibold">v1.0</p>
           </div>
         </div>
       </aside>
 
       {/* Main content */}
-      <div className="lg:pl-64">
+      <div className="lg:pl-20">
         {/* Mobile header */}
         <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-card px-4 lg:hidden">
           <Button
@@ -182,7 +173,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Page content */}
-        <main className="p-4 lg:p-8">{children}</main>
+        <main className="p-2">{children}</main>
       </div>
     </div>
   );
