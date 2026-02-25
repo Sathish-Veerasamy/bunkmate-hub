@@ -6,14 +6,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Mail, Phone, MapPin, Plus } from "lucide-react";
 import DataTable, { DataTableAction } from "@/components/ui/data-table";
-import DynamicEntityForm from "@/components/common/DynamicEntityForm";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { api } from "@/lib/api";
 import {
   USE_MOCK,
@@ -84,9 +76,6 @@ export default function DealerDetails() {
   const [dealer, setDealer] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [subModuleData, setSubModuleData] = useState<Record<string, any[]>>({});
-  const [formOpen, setFormOpen] = useState(false);
-  const [formEntity, setFormEntity] = useState("");
-  const [formRecord, setFormRecord] = useState<any>(null);
 
   useEffect(() => {
     const fetchDealer = async () => {
@@ -132,18 +121,14 @@ export default function DealerDetails() {
   const openAddForm = (tabKey: string) => {
     const tabConfig = SUB_MODULE_TABS.find(t => t.key === tabKey);
     if (tabConfig?.refEntity) {
-      setFormEntity(tabConfig.refEntity);
-      setFormRecord(null);
-      setFormOpen(true);
+      navigate(`/${tabConfig.refEntity}s/new`);
     }
   };
 
   const openEditForm = (tabKey: string, record: any) => {
     const tabConfig = SUB_MODULE_TABS.find(t => t.key === tabKey);
     if (tabConfig?.refEntity) {
-      setFormEntity(tabConfig.refEntity);
-      setFormRecord(record);
-      setFormOpen(true);
+      navigate(`/${tabConfig.refEntity}s/${record.id}/edit`);
     }
   };
 
@@ -287,31 +272,6 @@ export default function DealerDetails() {
         })}
       </Tabs>
 
-      {/* Generic Entity Form Dialog */}
-      <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {formRecord ? `Edit ${formEntity}` : `Add ${formEntity}`}
-            </DialogTitle>
-            <DialogDescription>
-              {formRecord ? `Update ${formEntity} details` : `Create a new ${formEntity} record`}
-            </DialogDescription>
-          </DialogHeader>
-          {formOpen && (
-            <DynamicEntityForm
-              entityName={formEntity}
-              record={formRecord}
-              onClose={() => setFormOpen(false)}
-              parentContext={{
-                parentEntity: "dealer",
-                parentId: dealerId,
-                mappedBy: SUB_MODULE_TABS.find(t => t.refEntity === formEntity)?.mappedBy,
-              }}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

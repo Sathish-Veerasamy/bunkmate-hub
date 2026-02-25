@@ -21,6 +21,7 @@ import OrganizationSetup from "./pages/OrganizationSetup";
 import TenantSelection from "./pages/TenantSelection";
 import Donations from "./pages/Donations";
 import Tasks from "./pages/Tasks";
+import EntityFormPage from "./pages/EntityFormPage";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +50,10 @@ const App = () => (
           <Route path="/tasks" element={<ProtectedRoute><Layout><Tasks /></Layout></ProtectedRoute>} />
           <Route path="/users" element={<ProtectedRoute><Layout><Users /></Layout></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Layout><Settings /></Layout></ProtectedRoute>} />
+
+          {/* Generic entity form routes */}
+          <Route path="/:entity/new" element={<ProtectedRoute><Layout><EntityFormPage /></Layout></ProtectedRoute>} />
+          <Route path="/:entity/:id/edit" element={<ProtectedRoute><Layout><EntityFormPage /></Layout></ProtectedRoute>} />
           
           {/* Catch-all */}
           <Route path="*" element={<NotFound />} />
