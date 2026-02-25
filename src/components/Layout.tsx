@@ -24,6 +24,7 @@ interface Module {
 
 // Fallback static nav if API fails
 const FALLBACK_NAV: Module[] = [
+  { id: 0, name: "Home", icon: "home", route: "/", subModules: [] },
   { id: 1, name: "Dealers", icon: "users", route: "/dealers", subModules: [] },
   { id: 2, name: "Tasks", icon: "checkSquare", route: "/tasks", subModules: [] },
   { id: 3, name: "Donations", icon: "heart", route: "/donations", subModules: [] },
