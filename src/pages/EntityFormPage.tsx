@@ -1,7 +1,7 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import DynamicEntityForm from "@/components/common/DynamicEntityForm";
 
 function toTitle(name: string) {
@@ -9,18 +9,26 @@ function toTitle(name: string) {
 }
 
 export default function EntityFormPage() {
-  const { entity, id } = useParams();
+  const { entity: entityParam, id } = useParams();
+  const { pathname } = useLocation();
   const navigate = useNavigate();
-  // Route param is plural (e.g. "dealers"), strip trailing 's' for entity name
-  const rawEntity = entity || "";
+
+  // Supports both routes:
+  // 1) /:entity/new, /:entity/:id/edit
+  // 2) /dealers/new, /dealers/:id/edit
+  const pathSegments = pathname.split("/").filter(Boolean);
+  const rawEntity = entityParam || pathSegments[0] || "";
   const entityName = rawEntity.endsWith("s") ? rawEntity.slice(0, -1) : rawEntity;
+
   const isEdit = !!id;
   const label = toTitle(entityName);
 
-  // For edit mode, we'd need to fetch the record. For now pass undefined (DynamicEntityForm handles it via record prop).
-  // A real implementation would fetch the record here. Currently the form works for create mode.
-
   const handleSuccess = () => {
+    if (!rawEntity) {
+      navigate("/", { replace: true });
+      return;
+    }
+
     if (isEdit) {
       navigate(`/${rawEntity}/${id}/details`, { replace: true });
     } else {
