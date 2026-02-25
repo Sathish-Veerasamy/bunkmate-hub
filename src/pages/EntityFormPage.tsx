@@ -11,7 +11,9 @@ function toTitle(name: string) {
 export default function EntityFormPage() {
   const { entity, id } = useParams();
   const navigate = useNavigate();
-  const entityName = entity || "";
+  // Route param is plural (e.g. "dealers"), strip trailing 's' for entity name
+  const rawEntity = entity || "";
+  const entityName = rawEntity.endsWith("s") ? rawEntity.slice(0, -1) : rawEntity;
   const isEdit = !!id;
   const label = toTitle(entityName);
 
@@ -19,12 +21,10 @@ export default function EntityFormPage() {
   // A real implementation would fetch the record here. Currently the form works for create mode.
 
   const handleSuccess = () => {
-    // After save, navigate to details page if an id exists, otherwise back to list
     if (isEdit) {
-      navigate(`/${entityName}s/${id}/details`, { replace: true });
+      navigate(`/${rawEntity}/${id}/details`, { replace: true });
     } else {
-      // Go back to entity list — the new record's details page would require knowing the new id
-      navigate(`/${entityName}s`, { replace: true });
+      navigate(`/${rawEntity}`, { replace: true });
     }
   };
 
