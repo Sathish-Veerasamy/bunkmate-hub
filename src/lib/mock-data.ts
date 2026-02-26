@@ -346,6 +346,13 @@ export function getMockEntityList(entityName: string): any[] {
     case "dealer": return MOCK_DEALERS;
     case "task": return MOCK_ALL_TASKS;
     case "donation": return MOCK_ALL_DONATIONS;
+    case "subscription": {
+      // Flatten keyed subscriptions
+      return Object.values(MOCK_SUBSCRIPTIONS).flat();
+    }
+    case "meeting": {
+      return Object.values(MOCK_MEETINGS).flat();
+    }
     default: return [];
   }
 }
@@ -355,4 +362,13 @@ export function getMockEntityList(entityName: string): any[] {
 // ============================================
 export function getMockDealerById(id: number) {
   return MOCK_DEALERS.find((d) => d.id === id) ?? null;
+}
+
+// ============================================
+// HELPER: Get any entity record by ID
+// ============================================
+export function getMockEntityById(entityName: string, id: string | number): any {
+  const numId = typeof id === "string" ? parseInt(id, 10) : id;
+  const list = getMockEntityList(entityName);
+  return list.find((r: any) => r.id === numId) ?? null;
 }
