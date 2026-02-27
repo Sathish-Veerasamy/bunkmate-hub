@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,11 +9,11 @@ import { Loader2 } from "lucide-react";
 import { USE_MOCK, getEntityMeta, getRefEntityOptions, type EntityMeta } from "@/lib/mock-data";
 
 interface DynamicEntityFormProps {
-  entityName: string;        // e.g. "dealer", "task", "subscription"
-  record?: any;              // existing record for edit mode
+  entityName: string;
+  record?: any;
   onClose: () => void;
-  onSuccess?: () => void;
-  parentContext?: {           // optional parent context for sub-modules
+  onSuccess?: (responseData?: any) => void;
+  parentContext?: {
     parentEntity: string;
     parentId: number | string;
     mappedBy?: string;
@@ -39,6 +39,9 @@ export default function DynamicEntityForm({
     Record<string, { id: string | number; [key: string]: any }[]>
   >({});
   const [submitting, setSubmitting] = useState(false);
+
+  // Store initial values to diff for edit mode
+  const initialValues = useRef<Record<string, any>>({});
 
   const {
     control,
@@ -71,7 +74,10 @@ export default function DynamicEntityForm({
           else setMetaError("Failed to load form metadata");
         }
       }
-      if (record) reset(record);
+      if (record) {
+        reset(record);
+        initialValues.current = { ...record };
+      }
       setMetaLoading(false);
     };
     fetchMeta();
@@ -116,42 +122,60 @@ export default function DynamicEntityForm({
     if (!meta) return;
     setSubmitting(true);
 
-    const payload: Record<string, any> = {};
-
-    meta.fields.forEach((f) => {
-      const val = values[f.name];
-      if (val === undefined || val === null || val === "") return;
-      if (f.type === "file") return;
-      payload[f.name] = val;
-    });
-
-    // Attach parent context if creating a sub-module record
-    if (parentContext?.mappedBy) {
-      payload[parentContext.mappedBy] = parentContext.parentId;
-    }
-
     const endpoint = `/${entityPlural}`;
-    const res = record
-      ? await api.put(`${endpoint}/${record.id}`, payload)
-      : await api.post(endpoint, payload);
+    const isEdit = !!record;
 
-    setSubmitting(false);
-
-    if (res.success) {
-      toast({
-        title: record ? `${entityLabel} updated` : `${entityLabel} created`,
-        description: record
-          ? "Changes saved successfully."
-          : `New ${entityName} has been added.`,
+    if (isEdit) {
+      // Only send modified fields
+      const modifiedFields: Record<string, any> = {};
+      meta.fields.forEach((f) => {
+        if (f.type === "file") return;
+        const newVal = values[f.name];
+        const oldVal = initialValues.current[f.name];
+        if (newVal !== oldVal) {
+          modifiedFields[f.name] = newVal ?? null;
+        }
       });
-      onSuccess?.();
-      onClose();
+
+      if (Object.keys(modifiedFields).length === 0) {
+        toast({ title: "No changes", description: "Nothing was modified." });
+        setSubmitting(false);
+        return;
+      }
+
+      const res = await api.put(`${endpoint}/${record.id}`, { input_data: modifiedFields });
+      setSubmitting(false);
+
+      if (res.success) {
+        toast({ title: `${entityLabel} updated`, description: "Changes saved successfully." });
+        onSuccess?.(res.data);
+        onClose();
+      } else {
+        toast({ variant: "destructive", title: "Error", description: res.error ?? "Something went wrong." });
+      }
     } else {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: res.error ?? "Something went wrong.",
+      // Create: wrap all fields in input_data
+      const payload: Record<string, any> = {};
+      meta.fields.forEach((f) => {
+        const val = values[f.name];
+        if (val === undefined || val === null || val === "") return;
+        if (f.type === "file") return;
+        payload[f.name] = val;
       });
+
+      if (parentContext?.mappedBy) {
+        payload[parentContext.mappedBy] = parentContext.parentId;
+      }
+
+      const res = await api.post(endpoint, { input_data: payload });
+      setSubmitting(false);
+
+      if (res.success) {
+        toast({ title: `${entityLabel} created`, description: `New ${entityName} has been added.` });
+        onSuccess?.(res.data);
+      } else {
+        toast({ variant: "destructive", title: "Error", description: res.error ?? "Something went wrong." });
+      }
     }
   };
 

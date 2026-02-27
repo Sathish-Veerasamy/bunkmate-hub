@@ -2,7 +2,20 @@
 // API CONFIGURATION
 // ============================================
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
-const API_PREFIX = '/api/v3';
+
+// Tenant-aware prefix: /{tenant}/api/v3
+// Reads from auth store; defaults to "default"
+function getApiPrefix(): string {
+  try {
+    const raw = localStorage.getItem('auth-storage');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const tenantName = parsed?.state?.tenant?.name;
+      if (tenantName) return `/${encodeURIComponent(tenantName)}/api/v3`;
+    }
+  } catch {}
+  return '/default/api/v3';
+}
 
 // ============================================
 // TYPES
@@ -27,7 +40,7 @@ async function apiRequest<T>(
   options: RequestInit & { params?: Record<string, string | number | boolean> } = {}
 ): Promise<ApiResponse<T>> {
   try {
-    let url = `${API_BASE_URL}${API_PREFIX}${endpoint}`;
+    let url = `${API_BASE_URL}${getApiPrefix()}${endpoint}`;
 
     if (options.params) {
       const queryString = new URLSearchParams(

@@ -103,7 +103,8 @@ export default function EntityDetailsPage({
   renderDetails,
 }: EntityDetailsPageProps) {
   const { id, tab, entity: entityParam } = useParams();
-  const { pathname } = useLocation();
+  const location = useLocation();
+  const { pathname } = location;
   const navigate = useNavigate();
   const activeTab = tab || "details";
 
@@ -111,8 +112,10 @@ export default function EntityDetailsPage({
   const entityName = entityNameProp || singularize(entityParam || pathname.split("/").filter(Boolean)[0] || "");
   const plural = `${entityName}s`;
 
-  const [record, setRecord] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  // Accept record from navigation state (e.g. after create)
+  const locationRecord = (location as any).state?.record;
+  const [record, setRecord] = useState<any>(locationRecord || null);
+  const [loading, setLoading] = useState(!locationRecord);
   const [meta, setMeta] = useState<EntityMeta | null>(null);
   const [subModuleData, setSubModuleData] = useState<Record<string, any[]>>({});
 
@@ -133,9 +136,10 @@ export default function EntityDetailsPage({
       mappedBy: f.relational_mapping?.mapped_by,
     }));
 
-  // ── Fetch record ────────────────────────────
+  // ── Fetch record (skip if already have from nav state) ────────
   useEffect(() => {
-    const fetch = async () => {
+    if (record) return; // Already loaded from navigation state
+    const fetchRecord = async () => {
       setLoading(true);
       if (USE_MOCK) {
         setRecord(getMockEntityById(entityName, id!));
@@ -145,7 +149,7 @@ export default function EntityDetailsPage({
       }
       setLoading(false);
     };
-    fetch();
+    fetchRecord();
   }, [entityName, id]);
 
   // ── Fetch sub-module data ───────────────────
