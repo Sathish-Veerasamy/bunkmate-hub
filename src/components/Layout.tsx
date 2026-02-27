@@ -174,7 +174,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Page content */}
-        <main className="p-2">{children}</main>
+        <main>{children}</main>
       </div>
     </div>
   );
