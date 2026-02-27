@@ -13,26 +13,34 @@ export default function EntityFormPage() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
 
-  // Supports both routes:
-  // 1) /:entity/new, /:entity/:id/edit
-  // 2) /dealers/new, /dealers/:id/edit
   const pathSegments = pathname.split("/").filter(Boolean);
   const rawEntity = entityParam || pathSegments[0] || "";
   const entityName = rawEntity.endsWith("s") ? rawEntity.slice(0, -1) : rawEntity;
+  const entityPlural = entityName ? `${entityName}s` : "";
 
   const isEdit = !!id;
   const label = toTitle(entityName);
 
-  const handleSuccess = () => {
+  const handleSuccess = (responseData?: any) => {
     if (!rawEntity) {
       navigate("/", { replace: true });
       return;
     }
 
     if (isEdit) {
-      navigate(`/${rawEntity}/${id}/details`, { replace: true });
+      // After edit, go to details page
+      navigate(`/${entityPlural}/${id}/details`, { replace: true });
     } else {
-      navigate(`/${rawEntity}`, { replace: true });
+      // After create, navigate to details page with response data
+      const newId = responseData?.id || responseData?.data?.id;
+      if (newId) {
+        navigate(`/${entityPlural}/${newId}/details`, {
+          replace: true,
+          state: { record: responseData?.data || responseData },
+        });
+      } else {
+        navigate(`/${entityPlural}`, { replace: true });
+      }
     }
   };
 
