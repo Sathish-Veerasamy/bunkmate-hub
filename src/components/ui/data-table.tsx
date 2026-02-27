@@ -475,13 +475,19 @@ export default function DataTable({
                       </div>
                     </TableCell>
                   )}
-                  {visibleColumns.map((column) => (
-                    <TableCell key={column.id} className="px-3 py-2 text-sm">
-                      {column.render
-                        ? column.render(row[column.id], row)
-                        : <span className="text-foreground/90">{row[column.id]?.toString() || "—"}</span>}
-                    </TableCell>
-                  ))}
+                  {visibleColumns.map((column) => {
+                    const cellValue = row[column.id];
+                    const displayValue = cellValue && typeof cellValue === "object"
+                      ? (cellValue.name || cellValue.title || cellValue.label || JSON.stringify(cellValue))
+                      : cellValue;
+                    return (
+                      <TableCell key={column.id} className="px-3 py-2 text-sm">
+                        {column.render
+                          ? column.render(cellValue, row)
+                          : <span className="text-foreground/90">{displayValue?.toString() || "—"}</span>}
+                      </TableCell>
+                    );
+                  })}
                 </TableRow>
               ))
             )}
