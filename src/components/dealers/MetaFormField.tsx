@@ -366,6 +366,36 @@ export default function MetaFormField({
               );
 
             default:
+              // Fallback: render ref_entity as dropdown even if display_type isn't "Dropdown"
+              if (field.type === "ref_entity" && !field.collection) {
+                const displayKey = field.display_key ?? "name";
+                return (
+                  <Select
+                    value={ctrl.value?.id ? String(ctrl.value.id) : (ctrl.value ? String(ctrl.value) : "")}
+                    onValueChange={(val) => {
+                      const selected = refOptions.find(
+                        (o) => String(o.id) === val
+                      );
+                      ctrl.onChange(
+                        selected
+                          ? { id: selected.id, [displayKey]: selected[displayKey] }
+                          : undefined
+                      );
+                    }}
+                  >
+                    <SelectTrigger id={field.name}>
+                      <SelectValue placeholder={`Select ${label}`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {refOptions.map((opt) => (
+                        <SelectItem key={opt.id} value={String(opt.id)}>
+                          {opt[displayKey] ?? String(opt.id)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                );
+              }
               return (
                 <Input
                   id={field.name}
