@@ -17,6 +17,20 @@ function toLabel(name: string) {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+function toDisplayValue(value: unknown): string {
+  if (value === null || value === undefined) return "—";
+
+  if (typeof value === "object") {
+    const obj = value as Record<string, unknown>;
+    const preferred = obj.name ?? obj.title ?? obj.label ?? obj.value ?? obj.id;
+    return preferred === null || preferred === undefined
+      ? JSON.stringify(value)
+      : String(preferred);
+  }
+
+  return String(value);
+}
+
 /**
  * Hook that derives DataTable columns, searchable fields,
  * and filter options from entity metainfo.
@@ -149,7 +163,8 @@ export function useMetaColumns(
 
         // Colored badges for common patterns
         if (f.name === "status" || f.name === "priority") {
-          col.render = (value: string) => {
+          col.render = (value: unknown) => {
+            const displayText = toDisplayValue(value);
             const statusColors: Record<string, string> = {
               Active: "bg-green-100 text-green-800",
               Completed: "bg-green-100 text-green-800",
@@ -164,9 +179,9 @@ export function useMetaColumns(
             return (
               <Badge
                 variant="secondary"
-                className={statusColors[value] || ""}
+                className={statusColors[displayText] || ""}
               >
-                {value}
+                {displayText}
               </Badge>
             );
           };
@@ -181,11 +196,12 @@ export function useMetaColumns(
 
         // Render the display_key value (object → string)
         const displayKey = f.display_key || "name";
-        col.render = (value: any) => {
+        col.render = (value: unknown) => {
           if (value && typeof value === "object") {
-            return <span>{value[displayKey] || "—"}</span>;
+            const objectValue = value as Record<string, unknown>;
+            return <span>{toDisplayValue(objectValue[displayKey] ?? objectValue)}</span>;
           }
-          return <span>{value || "—"}</span>;
+          return <span>{toDisplayValue(value)}</span>;
         };
       }
 
